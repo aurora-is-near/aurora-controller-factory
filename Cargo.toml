@@ -12,6 +12,11 @@ publish = false
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[lints.clippy]
+all = "deny"
+nursery = "deny"
+pedantic = "deny"
+
 [dependencies]
 anyhow = "1"
 hex = "0.4"

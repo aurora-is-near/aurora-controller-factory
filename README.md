@@ -2,9 +2,16 @@
 
 ----
 
-The main purpose of the contract is to provide the possibility to move all ops-related functions into a separate 
-controller contract. Ops-related functions include: deployment, upgrading, downgrading and delegation of execution
-some transactions. The controller contract implements role-based access control using the [near-plugins].
+The main purpose of the contract is to provide the possibility to move all ops-related 
+functions into a separate controller contract. Ops-related functions include: deployment, 
+upgrading, downgrading, and delegation of execution for some transactions. The controller 
+contract implements role-based access control using the [near-plugins].
+
+### Useful commands
+
+- Build: `cargo build --release --target wasm32-unknown-unknown`
+- Clippy: `cargo clippy --all-targets -- -D warnings`
+- Test: `cargo test --all-targets`
 
 ### API
 
@@ -143,3 +150,6 @@ pub struct DeploymentInfo {
 ```
 
 [near-plugins]: https://github.com/aurora-is-near/near-plugins
+
+### LICENSE
+**Aurora Controller Factory** is under [CC0 1.0 Universal](LICENSE)
