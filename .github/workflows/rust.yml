@@ -38,6 +38,11 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
+      - name: Build Smart Contract
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target wasm32-unknown-unknown
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
