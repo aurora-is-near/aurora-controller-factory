@@ -1,0 +1,37 @@
+[package]
+name = "aurora-controller-factory"
+authors = ["Aurora Labs <hello@aurora.dev>"]
+version = "0.1.0"
+edition = "2021"
+homepage = "https://github.com/aurora-is-near/aurora-factory"
+repository = "https://github.com/aurora-is-near/aurora-factory"
+license = "CC0-1.0"
+readme = "README.md"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+anyhow = "1"
+hex = "0.4"
+near-sdk = "4.1"
+near-contract-standards = "4.1"
+near-plugins = { git = "https://github.com/aurora-is-near/near-plugins", tag = "v0.1.0" }
+semver = { version = "1", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+near-workspaces = "0.9"
+tokio = { version = "1", features = ["macros"] }
+
+[patch.crates-io]
+parity-secp256k1 = { git = 'https://github.com/paritytech/rust-secp256k1', rev = "d05fd8e" }
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+overflow-checks = true

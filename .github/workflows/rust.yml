@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  fmt:
+    name: Formatting
+    runs-on: github-hosted-heavy-runner
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Run rustfmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: github-hosted-heavy-runner
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Run clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-targets -- -D warnings
+
+  test:
+    name: Tests
+    runs-on: github-hosted-heavy-runner
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-targets
