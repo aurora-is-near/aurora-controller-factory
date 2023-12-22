@@ -1,5 +1,3 @@
-#![deny(clippy::all, clippy::nursery, clippy::pedantic)]
-
 use crate::event::Event;
 use crate::types::{DeploymentInfo, FunctionCallArgs, ReleaseInfo, Version};
 use near_plugins::{
