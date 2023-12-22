@@ -1,6 +1,6 @@
 # Aurora Controller Factory
 
-----
+[![CI](https://github.com/aurora-is-near/aurora-controller-factory/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/aurora-is-near/aurora-controller-factory/actions/workflows/rust.yml)
 
 The main purpose of the contract is to provide the possibility to move all ops-related 
 functions into a separate controller contract. Ops-related functions include: deployment, 
