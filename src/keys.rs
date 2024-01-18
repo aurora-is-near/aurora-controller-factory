@@ -1,4 +1,17 @@
-pub const BLOBS_KEY: &[u8] = b"BLOBS";
-pub const DEPLOYMENTS_KEY: &[u8] = b"DEPLOYMENTS";
-pub const RELEASES_KEY: &[u8] = b"RELEASES";
-pub const LATEST_KEY: &[u8] = b"LATEST";
+use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::IntoStorageKey;
+
+/// Prefixes for the `near-sdk` collections that are used in the smart contract.
+#[derive(BorshSerialize, BorshDeserialize)]
+pub enum Prefix {
+    Blobs,
+    Deployments,
+    Releases,
+    LatestRelease,
+}
+
+impl IntoStorageKey for Prefix {
+    fn into_storage_key(self) -> Vec<u8> {
+        self.try_to_vec().unwrap()
+    }
+}

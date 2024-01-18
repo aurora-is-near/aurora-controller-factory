@@ -19,8 +19,8 @@ async fn test_delegate_execution() {
             "actions": vec![FunctionCallArgs {
                 function_name: "set_owner".to_string(),
                 arguments: contract_id.try_to_vec().map(Into::into).unwrap(),
-                amount: 0,
-                gas: Gas::ONE_TERA * 5
+                amount: 0.into(),
+                gas: (Gas::ONE_TERA * 5).0.into()
             }]
         }))
         .max_gas()
