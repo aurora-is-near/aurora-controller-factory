@@ -1,7 +1,6 @@
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::json_types::Base64VecU8;
+use near_sdk::json_types::{Base64VecU8, U128, U64};
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{Balance, Gas};
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 use std::io::Write;
@@ -94,8 +93,8 @@ impl Display for Version {
 pub struct FunctionCallArgs {
     pub function_name: String,
     pub arguments: Base64VecU8,
-    pub amount: Balance,
-    pub gas: Gas,
+    pub amount: U128,
+    pub gas: U64,
 }
 
 #[test]

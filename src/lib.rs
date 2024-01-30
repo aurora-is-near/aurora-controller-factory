@@ -87,10 +87,10 @@ impl AuroraControllerFactory {
     pub fn new(owner_id: AccountId) -> Self {
         assert!(!env::state_exists(), "Already initialized");
         let mut contract = Self {
-            releases: UnorderedMap::new(keys::RELEASES_KEY),
-            blobs: UnorderedMap::new(keys::BLOBS_KEY),
-            deployments: UnorderedMap::new(keys::DEPLOYMENTS_KEY),
-            latest: LazyOption::new(keys::LATEST_KEY, None),
+            releases: UnorderedMap::new(keys::Prefix::Releases),
+            blobs: UnorderedMap::new(keys::Prefix::Blobs),
+            deployments: UnorderedMap::new(keys::Prefix::Deployments),
+            latest: LazyOption::new(keys::Prefix::LatestRelease, None),
         };
 
         contract.owner_set(Some(owner_id));
@@ -134,8 +134,8 @@ impl AuroraControllerFactory {
                 promise.function_call(
                     action.function_name,
                     action.arguments.into(),
-                    action.amount,
-                    action.gas,
+                    action.amount.into(),
+                    Gas(action.gas.0),
                 )
             })
     }

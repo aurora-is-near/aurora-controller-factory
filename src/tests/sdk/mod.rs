@@ -1,8 +1,7 @@
 use crate::types::ReleaseInfo;
 use crate::AuroraControllerFactory;
 use near_plugins::AccessControllable;
-use near_sdk::serde_json::Value;
-use near_sdk::{AccountId, ONE_NEAR};
+use near_sdk::AccountId;
 
 #[macro_use]
 mod macros;
@@ -94,35 +93,6 @@ fn test_adding_blob_without_adding_hash() {
     let mut contract = AuroraControllerFactory::new(owner());
     assert!(contract.acl_grant_role("DAO".to_owned(), owner()).unwrap());
     contract.add_release_blob();
-}
-
-#[ignore]
-#[test]
-fn test_deploy_new_aurora_contract() {
-    set_env!(
-        predecessor_account_id: owner(),
-        attached_deposit: ONE_NEAR * 15,
-        input: include_bytes!("../../../res/aurora-mainnet-silo-3.4.0.wasm").to_vec(),
-    );
-    let mut contract = AuroraControllerFactory::new(owner());
-    assert!(contract.acl_grant_role("DAO".to_owned(), owner()).unwrap());
-
-    contract.add_release_info(
-        "05ed0185c7348ca8949727d7f0f20870cf24a768407b2870032e6ef3963990a7".to_string(),
-        "3.4.0".parse().unwrap(),
-        true,
-        None,
-        None,
-    );
-    contract.add_release_blob();
-    contract.deploy(
-        new_engine(),
-        "new".to_string(),
-        Value::default(),
-        Some("05ed0185c7348ca8949727d7f0f20870cf24a768407b2870032e6ef3963990a7".to_string()),
-    );
-
-    assert_eq!(contract.get_deployments().len(), 1);
 }
 
 #[test]
