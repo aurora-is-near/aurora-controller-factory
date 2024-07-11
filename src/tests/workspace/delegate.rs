@@ -1,9 +1,9 @@
 use super::utils;
 use crate::tests::{BLOB_3_4_0, HASH_3_4_0};
 use crate::types::FunctionCallArgs;
-use near_sdk::borsh::{self, BorshSerialize};
+use near_gas::NearGas;
+use near_sdk::near;
 use near_sdk::serde_json::json;
-use near_sdk::Gas;
 use near_workspaces::types::NearToken;
 use near_workspaces::{Account, AccountId, Contract};
 use std::str::FromStr;
@@ -18,9 +18,9 @@ async fn test_delegate_execution() {
             "receiver_id": &contract_id,
             "actions": vec![FunctionCallArgs {
                 function_name: "set_owner".to_string(),
-                arguments: contract_id.try_to_vec().map(Into::into).unwrap(),
-                amount: 0.into(),
-                gas: (Gas::ONE_TERA * 5).0.into()
+                arguments: near_sdk::borsh::to_vec(&contract_id).map(Into::into).unwrap(),
+                amount: NearToken::from_near(0),
+                gas: NearGas::from_tgas(5)
             }]
         }))
         .max_gas()
@@ -39,9 +39,9 @@ async fn test_delegate_execution() {
     assert_eq!(owner, contract_id);
 }
 
-#[derive(BorshSerialize)]
+#[near(serializers = [borsh])]
 struct SetOwner {
-    new_owner: near_sdk::AccountId,
+    new_owner: AccountId,
 }
 
 #[tokio::test]
@@ -64,10 +64,9 @@ async fn test_delegate_pause() {
     let result = factory_owner
         .call(&contract_id, "set_owner")
         .args_borsh(
-            SetOwner {
+            near_sdk::borsh::to_vec(&SetOwner {
                 new_owner: "new_owner".parse().unwrap(),
-            }
-            .try_to_vec()
+            })
             .unwrap(),
         )
         .transact()

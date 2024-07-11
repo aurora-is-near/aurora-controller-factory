@@ -7,7 +7,7 @@ use near_workspaces::{Account, AccountId, Contract, Worker};
 const FACTORY_OWNER: &str = "factory-owner";
 const AURORA_FACTORY_CONTRACT_PATH: &str =
     "target/wasm32-unknown-unknown/release/aurora_controller_factory.wasm";
-const INITIAL_BALANCE: NearToken = NearToken::from_near(200);
+pub const INITIAL_BALANCE: NearToken = NearToken::from_near(200);
 
 pub async fn crate_factory() -> anyhow::Result<(Account, Contract, Worker<Sandbox>)> {
     let worker = near_workspaces::sandbox().await?;

@@ -1,7 +1,8 @@
-use crate::types::ReleaseInfo;
-use crate::AuroraControllerFactory;
 use near_plugins::AccessControllable;
 use near_sdk::AccountId;
+
+use crate::types::ReleaseInfo;
+use crate::AuroraControllerFactory;
 
 #[macro_use]
 mod macros;
@@ -145,27 +146,19 @@ fn test_check_latest_release() {
 }
 
 #[test]
-fn test_check_latest_release_without_adding() {
+#[should_panic = "the latest release hash hasn't been set yet"]
+fn test_check_latest_release_hash_without_adding() {
     set_env!(predecessor_account_id: owner());
     let contract = AuroraControllerFactory::new(owner());
+    let _ = contract.get_latest_release_hash();
+}
 
-    let result = std::panic::catch_unwind(|| contract.get_latest_release_hash());
-    let err_msg = result
-        .err()
-        .unwrap()
-        .downcast_ref::<String>()
-        .cloned()
-        .unwrap();
-    assert!(err_msg.contains("the latest release hash hasn't been set yet"));
-
-    let result = std::panic::catch_unwind(|| contract.get_latest_release_blob());
-    let err_msg = result
-        .err()
-        .unwrap()
-        .downcast_ref::<String>()
-        .cloned()
-        .unwrap();
-    assert!(err_msg.contains("the latest release hash hasn't been set yet"));
+#[test]
+#[should_panic = "the latest release hash hasn't been set yet"]
+fn test_check_latest_release_blob_without_adding() {
+    set_env!(predecessor_account_id: owner());
+    let contract = AuroraControllerFactory::new(owner());
+    let _ = contract.get_latest_release_blob();
 }
 
 #[test]
