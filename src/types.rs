@@ -1,15 +1,17 @@
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::json_types::{Base64VecU8, U128, U64};
+use near_gas::NearGas;
+use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
+use near_sdk::json_types::Base64VecU8;
 use near_sdk::serde::{Deserialize, Serialize};
+use near_sdk::{near, NearToken};
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
-use std::io::Write;
+use std::io::{Read, Write};
 use std::str::FromStr;
 
 /// Information about release.
-#[derive(Debug, Default, BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
-#[serde(crate = "near_sdk::serde")]
+#[near(serializers = [json, borsh])]
 pub struct ReleaseInfo {
     /// `sha256` hash of the WASM contract.
     pub hash: String,
@@ -24,9 +26,9 @@ pub struct ReleaseInfo {
 }
 
 /// Deployment information of the deployed contract.
-#[derive(Debug, BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
-#[serde(crate = "near_sdk::serde")]
+#[near(serializers = [json, borsh])]
 pub struct DeploymentInfo {
     /// `sha256` hash of the WASM contract.
     pub hash: String,
@@ -49,8 +51,8 @@ impl DeploymentInfo {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq, PartialOrd)]
-#[serde(crate = "near_sdk::serde")]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd)]
+#[near(serializers = [json])]
 pub struct Version(semver::Version);
 
 impl FromStr for Version {
@@ -62,8 +64,8 @@ impl FromStr for Version {
 }
 
 impl BorshDeserialize for Version {
-    fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
-        let string: String = BorshDeserialize::deserialize(buf)?;
+    fn deserialize_reader<R: Read>(reader: &mut R) -> std::io::Result<Self> {
+        let string = String::deserialize_reader(reader)?;
         string
             .parse()
             .map(Self)
@@ -73,7 +75,7 @@ impl BorshDeserialize for Version {
 
 impl BorshSerialize for Version {
     fn serialize<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-        writer.write_all(&self.0.to_string().try_to_vec()?)
+        writer.write_all(&near_sdk::borsh::to_vec(&self.0.to_string())?)
     }
 }
 
@@ -93,14 +95,14 @@ impl Display for Version {
 pub struct FunctionCallArgs {
     pub function_name: String,
     pub arguments: Base64VecU8,
-    pub amount: U128,
-    pub gas: U64,
+    pub amount: NearToken,
+    pub gas: NearGas,
 }
 
 #[test]
 fn test_version_borsh_serialize() {
     let actual: Version = "1.2.3-rc.2".parse().unwrap();
-    let bytes = actual.try_to_vec().unwrap();
+    let bytes = near_sdk::borsh::to_vec(&actual).unwrap();
     let expected = Version::try_from_slice(&bytes).unwrap();
 
     assert_eq!(actual, expected);

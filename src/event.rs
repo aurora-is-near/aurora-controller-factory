@@ -24,19 +24,19 @@ pub enum Event {
 
 #[derive(Serialize)]
 #[serde(crate = "near_sdk::serde")]
-struct EventMetadata<T> {
+struct EventMetadata<'a, T> {
     producer: &'static str,
     version: &'static str,
     event: Event,
-    metadata: Option<T>,
+    metadata: Option<&'a T>,
 }
 
-impl<T> EventMetadata<T>
+impl<'a, T> EventMetadata<'a, T>
 where
     T: Serialize,
 {
     /// Create new event metadata
-    const fn new(event: Event, metadata: T) -> Self {
+    const fn new(event: Event, metadata: &'a T) -> Self {
         Self {
             producer: EVENT_PRODUCER,
             version: VERSION,
@@ -51,7 +51,7 @@ where
     }
 }
 
-impl<T> Display for EventMetadata<T>
+impl<T> Display for EventMetadata<'_, T>
 where
     T: Serialize,
 {
@@ -65,7 +65,7 @@ where
 }
 
 /// Emit the log with event metadata on chain.
-pub fn emit<T: Serialize>(event: Event, metadata: T) {
+pub fn emit<T: Serialize>(event: Event, metadata: &T) {
     EventMetadata::new(event, metadata).emit();
 }
 
@@ -80,7 +80,7 @@ fn test_stringify_event_metadata() {
         downgrade_hash: None,
         description: Some("Aurora SILO 3.5.0".to_string()),
     };
-    let event_metadata = EventMetadata::new(Event::AddReleaseInfo, release_info);
+    let event_metadata = EventMetadata::new(Event::AddReleaseInfo, &release_info);
 
     assert_eq!(
         event_metadata.to_string(),

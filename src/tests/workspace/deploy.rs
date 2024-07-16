@@ -2,7 +2,7 @@ use super::utils;
 use crate::tests::{BLOB_3_4_0, BLOB_3_5_0, HASH_3_4_0, HASH_3_5_0};
 use crate::types::DeploymentInfo;
 use near_sdk::serde_json::json;
-use near_workspaces::types::{KeyType, NearToken};
+use near_workspaces::types::NearToken;
 use near_workspaces::AccountId;
 use std::collections::BTreeMap;
 
@@ -222,13 +222,18 @@ async fn test_add_deployment_info_for_existed_contract() {
 
     // Deploy silo contract 3.4.0 manually.
     let silo_contract = {
-        let contract_id: AccountId = "silo.test.near".parse().unwrap();
-        let sk = near_workspaces::types::SecretKey::from_random(KeyType::ED25519);
-        let result = worker
-            .create_tla_and_deploy(contract_id.clone(), sk, BLOB_3_4_0)
+        let contract_id = worker
+            .root_account()
+            .unwrap()
+            .create_subaccount("silo")
+            .initial_balance(utils::INITIAL_BALANCE)
+            .transact()
             .await
+            .unwrap()
+            .into_result()
             .unwrap();
-        assert!(result.is_success());
+        let result = contract_id.deploy(BLOB_3_4_0).await.unwrap();
+        assert!(result.is_success(), "{:?}", result.details);
         let silo_contract = result.unwrap();
 
         let result = silo_contract

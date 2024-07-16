@@ -20,18 +20,17 @@ pedantic = "deny"
 [dependencies]
 anyhow = "1"
 hex = "0.4"
-near-sdk = "4.1"
-near-contract-standards = "4.1"
-near-plugins = { git = "https://github.com/aurora-is-near/near-plugins", tag = "v0.1.0" }
+near-sdk = "5.2"
+near-contract-standards = "5.2"
+near-gas = "0.2"
+near-plugins = { git = "https://github.com/aleksuss/near-plugins.git", rev = "a1393df" }
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
-near-workspaces = "0.9"
+near-sdk = { version = "5.2", features = ["unit-testing"] }
+near-workspaces = "0.11"
 tokio = { version = "1", features = ["macros"] }
-
-[patch.crates-io]
-parity-secp256k1 = { git = 'https://github.com/paritytech/rust-secp256k1', rev = "d05fd8e" }
 
 [profile.release]
 codegen-units = 1
@@ -40,3 +39,4 @@ lto = true
 debug = false
 panic = "abort"
 overflow-checks = true
+strip = "symbols"

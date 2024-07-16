@@ -1,15 +1,17 @@
 use crate::event::Event;
 use crate::types::{DeploymentInfo, FunctionCallArgs, ReleaseInfo, Version};
+use near_gas::NearGas;
 use near_plugins::{
     access_control, access_control_any, AccessControlRole, AccessControllable, Ownable, Pausable,
     Upgradable,
 };
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LazyOption, UnorderedMap};
+use near_sdk::borsh::BorshDeserialize;
+use near_sdk::collections::LazyOption;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::serde_json::{json, Value};
+use near_sdk::store::IterableMap;
 use near_sdk::{
-    env, ext_contract, near_bindgen, AccountId, Gas, PanicOnDefault, Promise, PromiseResult,
+    env, ext_contract, near, AccountId, NearToken, PanicOnDefault, Promise, PromiseResult,
     PublicKey,
 };
 
@@ -21,17 +23,17 @@ pub mod types;
 pub mod utils;
 
 /// Gas needed for initialization deployed contract.
-const NEW_GAS: Gas = Gas(Gas::ONE_TERA.0 * 100);
+const NEW_GAS: NearGas = NearGas::from_tgas(100);
 
 /// Gas needed to upgrade contract.
-const UPGRADE_GAS: Gas = Gas(Gas::ONE_TERA.0 * 230);
+const UPGRADE_GAS: NearGas = NearGas::from_tgas(230);
 
 /// Gas needed to call the `add_deployment` callback.
-const ADD_DEPLOYMENT_GAS: Gas = Gas(Gas::ONE_TERA.0 * 5);
+const ADD_DEPLOYMENT_GAS: NearGas = NearGas::from_tgas(5);
 
 /// Amount of gas used by `delegate_pause` in the controller contract
 /// without taking into account the gas consumed by the promise.
-const OUTER_DELEGATE_PAUSE_GAS: Gas = Gas(Gas::ONE_TERA.0 * 10);
+const OUTER_DELEGATE_PAUSE_GAS: NearGas = NearGas::from_tgas(10);
 
 /// Allowed pause methods.
 const ALLOWED_PAUSE_METHODS: &[&str] = &["pause_contract", "pa_pause_feature"];
@@ -54,10 +56,7 @@ pub enum Role {
 }
 
 ///
-#[near_bindgen]
-#[derive(
-    Debug, BorshDeserialize, BorshSerialize, Ownable, PanicOnDefault, Pausable, Upgradable,
-)]
+#[derive(Ownable, PanicOnDefault, Pausable, Upgradable)]
 #[ownable]
 #[access_control(role_type(Role))]
 #[upgradable(access_control_roles(
@@ -68,14 +67,15 @@ pub enum Role {
     duration_update_appliers(Role::DAO),
 ))]
 #[pausable(manager_roles(Role::DAO, Role::Pauser))]
+#[near(contract_state)]
 pub struct AuroraControllerFactory {
-    releases: UnorderedMap<String, ReleaseInfo>,
-    blobs: UnorderedMap<String, Vec<u8>>,
-    deployments: UnorderedMap<AccountId, DeploymentInfo>,
+    releases: IterableMap<String, ReleaseInfo>,
+    blobs: IterableMap<String, Vec<u8>>,
+    deployments: IterableMap<AccountId, DeploymentInfo>,
     latest: LazyOption<ReleaseInfo>,
 }
 
-#[near_bindgen]
+#[near]
 impl AuroraControllerFactory {
     /// Initializes a new controller contract.
     ///
@@ -84,12 +84,12 @@ impl AuroraControllerFactory {
     /// The function panics if the state of the contract is already exist.
     #[must_use]
     #[init]
+    #[allow(clippy::use_self)]
     pub fn new(owner_id: AccountId) -> Self {
-        assert!(!env::state_exists(), "Already initialized");
         let mut contract = Self {
-            releases: UnorderedMap::new(keys::Prefix::Releases),
-            blobs: UnorderedMap::new(keys::Prefix::Blobs),
-            deployments: UnorderedMap::new(keys::Prefix::Deployments),
+            releases: IterableMap::new(keys::Prefix::Releases),
+            blobs: IterableMap::new(keys::Prefix::Blobs),
+            deployments: IterableMap::new(keys::Prefix::Deployments),
             latest: LazyOption::new(keys::Prefix::LatestRelease, None),
         };
 
@@ -109,7 +109,7 @@ impl AuroraControllerFactory {
     pub fn attach_full_access_key(&mut self, public_key: PublicKey) -> Promise {
         event::emit(
             Event::AttachFullAccessKey,
-            json!({"public_key": &public_key}),
+            &json!({"public_key": &public_key}),
         );
         Promise::new(env::current_account_id()).add_full_access_key(public_key)
     }
@@ -123,7 +123,7 @@ impl AuroraControllerFactory {
     ) -> Promise {
         event::emit(
             Event::DelegatedExecution,
-            json!({
+            &json!({
                 "receiver_id": &receiver_id,
                 "actions": &actions
             }),
@@ -134,8 +134,8 @@ impl AuroraControllerFactory {
                 promise.function_call(
                     action.function_name,
                     action.arguments.into(),
-                    action.amount.into(),
-                    Gas(action.gas.0),
+                    action.amount,
+                    action.gas,
                 )
             })
     }
@@ -152,17 +152,17 @@ impl AuroraControllerFactory {
             Some(method) => panic!("pause method: {method} is not allowed"),
             None => "pause_contract".to_string(), // Aurora Engine pause method name is used by default.
         };
-        let gas = env::prepaid_gas() - OUTER_DELEGATE_PAUSE_GAS;
+        let gas = env::prepaid_gas().saturating_sub(OUTER_DELEGATE_PAUSE_GAS);
 
         event::emit(
             Event::DelegatedPause,
-            json!({
+            &json!({
                 "receiver_id": &receiver_id,
                 "pause_method_name": &function_name
             }),
         );
 
-        Promise::new(receiver_id).function_call(function_name, vec![], 0, gas)
+        Promise::new(receiver_id).function_call(function_name, vec![], NearToken::from_near(0), gas)
     }
 
     /// Adds new contract release info.
@@ -188,28 +188,26 @@ impl AuroraControllerFactory {
             description,
         };
 
-        self.releases.insert(&hash, &release_info);
+        event::emit(Event::AddReleaseInfo, &release_info);
+        self.releases.insert(hash.clone(), release_info);
 
         if is_latest {
             self.set_latest_release(&hash);
         }
-
-        event::emit(Event::AddReleaseInfo, release_info);
     }
 
     /// Adds bytes of the contract smart contract to the corresponding release info.
     pub fn add_release_blob(&mut self) {
         let blob = env::input().unwrap_or_else(|| panic!("no blob's bytes were provided"));
         let hash = utils::hash_256(&blob);
-        let mut release_info = self.releases.get(&hash).unwrap_or_else(|| {
+        let release_info = self.releases.get_mut(&hash).unwrap_or_else(|| {
             panic!("release info doesn't exist for the hash: {hash}");
         });
 
-        release_info.is_blob_exist = true;
-        self.releases.insert(&hash, &release_info);
-        self.blobs.insert(&hash, &blob);
+        event::emit(Event::AddBlob, &json!({"blob_hash": &hash}));
 
-        event::emit(Event::AddBlob, json!({"blob_hash": &hash}));
+        release_info.is_blob_exist = true;
+        self.blobs.insert(hash, blob);
     }
 
     /// Marks the release with the hash: `hash` as latest.
@@ -226,7 +224,7 @@ impl AuroraControllerFactory {
             );
         }
 
-        self.latest.set(&new_latest);
+        self.latest.set(new_latest);
         event::emit(Event::SetLatestReleaseInfo, new_latest);
     }
 
@@ -237,13 +235,13 @@ impl AuroraControllerFactory {
             panic!("release info doesn't exist for hash: {hash}");
         });
         self.blobs.remove(hash);
-        event::emit(Event::RemoveReleaseInfo, release_info);
+        event::emit(Event::RemoveReleaseInfo, &release_info);
     }
 
     /// Returns a list of existing releases for deployment.
     #[must_use]
     pub fn get_releases(&self) -> Vec<ReleaseInfo> {
-        self.releases.values_as_vector().to_vec()
+        self.releases.values().cloned().collect()
     }
 
     /// Returns a WASM code from the release that corresponds the provided hash.
@@ -251,6 +249,7 @@ impl AuroraControllerFactory {
     pub fn get_release_blob(&self, hash: &String) -> Vec<u8> {
         self.blobs
             .get(hash)
+            .cloned()
             .unwrap_or_else(|| panic!("blob doesn't exist for release info with hash: {hash}"))
     }
 
@@ -301,14 +300,14 @@ impl AuroraControllerFactory {
         let init_args_bytes = near_sdk::serde_json::to_vec(&init_args)
             .unwrap_or_else(|e| panic!("bad format of the init args: {e}"));
 
-        event::emit(Event::Deploy, event_metadata);
+        event::emit(Event::Deploy, &event_metadata);
 
         let block_time = env::block_timestamp();
         let deployment_info = DeploymentInfo {
             hash: blob_hash,
             version: release_info.version.clone(),
             deployment_time: block_time,
-            upgrade_times: [(block_time, release_info.version)].into(),
+            upgrade_times: [(block_time, release_info.version.clone())].into(),
             init_args: near_sdk::serde_json::to_string(&init_args).unwrap_or_default(),
         };
 
@@ -316,8 +315,13 @@ impl AuroraControllerFactory {
             .create_account()
             .add_full_access_key(env::signer_account_pk())
             .transfer(env::attached_deposit())
-            .deploy_contract(code)
-            .function_call(init_method, init_args_bytes, 0, NEW_GAS)
+            .deploy_contract(code.clone())
+            .function_call(
+                init_method,
+                init_args_bytes,
+                NearToken::from_near(0),
+                NEW_GAS,
+            )
             .then(
                 ext_self::ext(env::current_account_id())
                     .with_static_gas(ADD_DEPLOYMENT_GAS)
@@ -328,58 +332,54 @@ impl AuroraControllerFactory {
     /// Adds new deployment info of previously deployed contract.
     /// E.g. the contract which has been deployed by not this controller contract.
     #[access_control_any(roles(Role::DAO))]
-    pub fn add_deployment_info(
-        &mut self,
-        contract_id: &AccountId,
-        deployment_info: &DeploymentInfo,
-    ) {
-        self.deployments.insert(contract_id, deployment_info);
+    pub fn add_deployment_info(&mut self, contract_id: AccountId, deployment_info: DeploymentInfo) {
         event::emit(
             Event::AddDeploymentInfo,
-            json!({"contract_id": contract_id, "deployment_info": deployment_info}),
+            &json!({"contract_id": contract_id, "deployment_info": deployment_info}),
         );
+        self.deployments.insert(contract_id, deployment_info);
     }
 
     /// Callback which adds new deployment info after successful deployment of new contract.
     #[private]
     pub fn update_deployment_info(
         &mut self,
-        contract_id: &AccountId,
-        deployment_info: &DeploymentInfo,
+        contract_id: AccountId,
+        deployment_info: DeploymentInfo,
     ) {
         let result = env::promise_result(0);
 
         if matches!(result, PromiseResult::Successful(_)) {
-            self.deployments.insert(contract_id, deployment_info);
             event::emit(
                 Event::UpdateDeploymentInfo,
-                json!({"contract_id": contract_id, "deployment_info": deployment_info}),
+                &json!({"contract_id": contract_id, "deployment_info": deployment_info}),
             );
+            self.deployments.insert(contract_id, deployment_info);
         }
     }
 
     /// Returns a list of existing contract deployments.
     #[must_use]
     pub fn get_deployments(&self) -> Vec<DeploymentInfo> {
-        self.deployments.values_as_vector().to_vec()
+        self.deployments.values().cloned().collect()
     }
 
     /// Upgrades a contract with account id and provided or the latest hash.
     #[access_control_any(roles(Role::DAO, Role::Updater))]
-    pub fn upgrade(&self, contract_id: AccountId, hash: Option<String>) -> Promise {
+    pub fn upgrade(&mut self, contract_id: AccountId, hash: Option<String>) -> Promise {
         self.upgrade_internal(contract_id, hash, false, Event::Upgrade)
     }
 
     /// Upgrades a contract with account id and provided hash without checking version.
     #[access_control_any(roles(Role::DAO))]
-    pub fn unrestricted_upgrade(&self, contract_id: AccountId, hash: String) -> Promise {
+    pub fn unrestricted_upgrade(&mut self, contract_id: AccountId, hash: String) -> Promise {
         self.upgrade_internal(contract_id, Some(hash), true, Event::UnrestrictedUpgrade)
     }
 
     /// Downgrades the contract with account id.
     #[access_control_any(roles(Role::DAO))]
-    pub fn downgrade(&self, contract_id: AccountId) -> Promise {
-        let mut deployment_info = self.deployments.get(&contract_id).unwrap_or_else(|| {
+    pub fn downgrade(&mut self, contract_id: AccountId) -> Promise {
+        let deployment_info = self.deployments.get_mut(&contract_id).unwrap_or_else(|| {
             panic!("contract with account id: {contract_id} hasn't been deployed")
         });
         let release_info = self.releases.get(&deployment_info.hash).unwrap_or_else(|| {
@@ -390,6 +390,7 @@ impl AuroraControllerFactory {
         });
         let downgrade_hash = release_info
             .downgrade_hash
+            .clone()
             .unwrap_or_else(|| panic!("release info doesn't include downgrade hash"));
         let downgrade_release_info = self
             .releases
@@ -404,15 +405,15 @@ impl AuroraControllerFactory {
             )
         });
 
-        event::emit(Event::Downgrade, event_metadata);
-        deployment_info.update(downgrade_hash, downgrade_release_info.version);
-        upgrade_promise(contract_id, blob, &deployment_info)
+        event::emit(Event::Downgrade, &event_metadata);
+        deployment_info.update(downgrade_hash, downgrade_release_info.version.clone());
+        upgrade_promise(contract_id, blob.clone(), deployment_info)
     }
 }
 
 impl AuroraControllerFactory {
     fn upgrade_internal(
-        &self,
+        &mut self,
         contract_id: AccountId,
         hash: Option<String>,
         skip_version_check: bool,
@@ -426,7 +427,7 @@ impl AuroraControllerFactory {
             .get(&hash)
             .unwrap_or_else(|| panic!("no release info for hash: {hash}"));
 
-        let mut deployment_info = self.deployments.get(&contract_id).unwrap_or_else(|| {
+        let deployment_info = self.deployments.get_mut(&contract_id).unwrap_or_else(|| {
             panic!("contract with account id: {contract_id} hasn't been deployed")
         });
 
@@ -445,9 +446,9 @@ impl AuroraControllerFactory {
             )
         });
 
-        event::emit(event, event_metadata);
-        deployment_info.update(hash, release_info.version);
-        upgrade_promise(contract_id, blob, &deployment_info)
+        event::emit(event, &event_metadata);
+        deployment_info.update(hash, release_info.version.clone());
+        upgrade_promise(contract_id, blob.clone(), deployment_info)
     }
 }
 
@@ -464,7 +465,12 @@ fn upgrade_promise(
     deployment_info: &DeploymentInfo,
 ) -> Promise {
     Promise::new(contract_id.clone())
-        .function_call("upgrade".to_string(), blob, 0, UPGRADE_GAS)
+        .function_call(
+            "upgrade".to_string(),
+            blob,
+            NearToken::from_near(0),
+            UPGRADE_GAS,
+        )
         .then(
             ext_self::ext(env::current_account_id())
                 .with_static_gas(ADD_DEPLOYMENT_GAS)
