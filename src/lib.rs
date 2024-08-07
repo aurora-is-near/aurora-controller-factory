@@ -1,6 +1,3 @@
-use crate::event::Event;
-use crate::types::{DeploymentInfo, FunctionCallArgs, ReleaseInfo, Version};
-use near_gas::NearGas;
 use near_plugins::{
     access_control, access_control_any, AccessControlRole, AccessControllable, Ownable, Pausable,
     Upgradable,
@@ -11,9 +8,12 @@ use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::serde_json::{json, Value};
 use near_sdk::store::IterableMap;
 use near_sdk::{
-    env, ext_contract, near, AccountId, NearToken, PanicOnDefault, Promise, PromiseResult,
-    PublicKey,
+    env, ext_contract, near, require, AccountId, Gas, NearToken, PanicOnDefault, Promise,
+    PromiseResult, PublicKey,
 };
+
+use crate::event::Event;
+use crate::types::{DeploymentInfo, FunctionCallArgs, ReleaseInfo, UpgradeArgs, Version};
 
 mod event;
 mod keys;
@@ -23,17 +23,20 @@ pub mod types;
 pub mod utils;
 
 /// Gas needed for initialization deployed contract.
-const NEW_GAS: NearGas = NearGas::from_tgas(100);
+const NEW_GAS: Gas = Gas::from_tgas(100);
 
-/// Gas needed to upgrade contract.
-const UPGRADE_GAS: NearGas = NearGas::from_tgas(230);
+/// Gas needed to upgrade contract (except a gas for the migration state).
+const UPGRADE_GAS: Gas = Gas::from_tgas(130);
+
+/// Gas needed to upgrade contract (except a gas for the migration state).
+const UPGRADE_GAS_NO_MIGRATION_GAS: Gas = Gas::from_tgas(180);
 
 /// Gas needed to call the `add_deployment` callback.
-const ADD_DEPLOYMENT_GAS: NearGas = NearGas::from_tgas(5);
+const ADD_DEPLOYMENT_GAS: Gas = Gas::from_tgas(5);
 
 /// Amount of gas used by `delegate_pause` in the controller contract
 /// without taking into account the gas consumed by the promise.
-const OUTER_DELEGATE_PAUSE_GAS: NearGas = NearGas::from_tgas(10);
+const OUTER_DELEGATE_PAUSE_GAS: Gas = Gas::from_tgas(10);
 
 /// Allowed pause methods.
 const ALLOWED_PAUSE_METHODS: &[&str] = &["pause_contract", "pa_pause_feature"];
@@ -55,7 +58,7 @@ pub enum Role {
     Updater,
 }
 
-///
+/// Controller contract for deploying and upgrading contracts.
 #[derive(Ownable, PanicOnDefault, Pausable, Upgradable)]
 #[ownable]
 #[access_control(role_type(Role))]
@@ -175,9 +178,9 @@ impl AuroraControllerFactory {
         downgrade_hash: Option<String>,
         description: Option<String>,
     ) {
-        assert!(
+        require!(
             self.releases.get(&hash).is_none(),
-            "release info for hash: {hash} is already exist"
+            "release info for the hash is already exist"
         );
 
         let release_info = ReleaseInfo {
@@ -279,9 +282,9 @@ impl AuroraControllerFactory {
         blob_hash: Option<String>,
     ) -> Promise {
         // Check that the `new_contract_id` wasn't used for another contract before.
-        assert!(
+        require!(
             self.deployments.get(&new_contract_id).is_none(),
-            "{new_contract_id} is already deployed"
+            format!("{new_contract_id} is already deployed")
         );
 
         let blob_hash = blob_hash
@@ -323,9 +326,9 @@ impl AuroraControllerFactory {
                 NEW_GAS,
             )
             .then(
-                ext_self::ext(env::current_account_id())
+                Self::ext(env::current_account_id())
                     .with_static_gas(ADD_DEPLOYMENT_GAS)
-                    .update_deployment_info(new_contract_id, &deployment_info),
+                    .update_deployment_info(new_contract_id, deployment_info),
             )
     }
 
@@ -366,14 +369,36 @@ impl AuroraControllerFactory {
 
     /// Upgrades a contract with account id and provided or the latest hash.
     #[access_control_any(roles(Role::DAO, Role::Updater))]
-    pub fn upgrade(&mut self, contract_id: AccountId, hash: Option<String>) -> Promise {
-        self.upgrade_internal(contract_id, hash, false, Event::Upgrade)
+    pub fn upgrade(
+        &mut self,
+        contract_id: AccountId,
+        hash: Option<String>,
+        state_migration_gas: Option<u64>,
+    ) -> Promise {
+        self.upgrade_internal(
+            contract_id,
+            hash,
+            false,
+            state_migration_gas,
+            Event::Upgrade,
+        )
     }
 
     /// Upgrades a contract with account id and provided hash without checking version.
     #[access_control_any(roles(Role::DAO))]
-    pub fn unrestricted_upgrade(&mut self, contract_id: AccountId, hash: String) -> Promise {
-        self.upgrade_internal(contract_id, Some(hash), true, Event::UnrestrictedUpgrade)
+    pub fn unrestricted_upgrade(
+        &mut self,
+        contract_id: AccountId,
+        hash: String,
+        state_migration_gas: Option<u64>,
+    ) -> Promise {
+        self.upgrade_internal(
+            contract_id,
+            Some(hash),
+            true,
+            state_migration_gas,
+            Event::UnrestrictedUpgrade,
+        )
     }
 
     /// Downgrades the contract with account id.
@@ -407,7 +432,13 @@ impl AuroraControllerFactory {
 
         event::emit(Event::Downgrade, &event_metadata);
         deployment_info.update(downgrade_hash, downgrade_release_info.version.clone());
-        upgrade_promise(contract_id, blob.clone(), deployment_info)
+
+        let args = UpgradeArgs {
+            code: blob.clone(),
+            state_migration_gas: None,
+        };
+
+        Self::upgrade_promise(contract_id, args, deployment_info)
     }
 }
 
@@ -417,6 +448,7 @@ impl AuroraControllerFactory {
         contract_id: AccountId,
         hash: Option<String>,
         skip_version_check: bool,
+        state_migration_gas: Option<u64>,
         event: Event,
     ) -> Promise {
         let hash = hash
@@ -431,11 +463,12 @@ impl AuroraControllerFactory {
             panic!("contract with account id: {contract_id} hasn't been deployed")
         });
 
-        assert!(
+        require!(
             release_info.version > deployment_info.version || skip_version_check,
-            "upgradable version: {} should be higher than the deployed version: {}",
-            release_info.version,
-            deployment_info.version
+            format!(
+                "upgradable version: {} should be higher than the deployed version: {}",
+                release_info.version, deployment_info.version
+            )
         );
 
         let event_metadata = json!({"contract_id": &contract_id, "release_info": &release_info});
@@ -448,32 +481,41 @@ impl AuroraControllerFactory {
 
         event::emit(event, &event_metadata);
         deployment_info.update(hash, release_info.version.clone());
-        upgrade_promise(contract_id, blob.clone(), deployment_info)
+
+        let args = UpgradeArgs {
+            code: blob.clone(),
+            state_migration_gas,
+        };
+
+        Self::upgrade_promise(contract_id, args, deployment_info)
+    }
+
+    fn upgrade_promise(
+        contract_id: AccountId,
+        args: UpgradeArgs,
+        deployment_info: &DeploymentInfo,
+    ) -> Promise {
+        ext_aurora::ext(contract_id.clone())
+            .with_static_gas(
+                args.state_migration_gas
+                    .map_or(UPGRADE_GAS_NO_MIGRATION_GAS, |gas| {
+                        UPGRADE_GAS.saturating_add(Gas::from_gas(gas))
+                    }),
+            )
+            .upgrade(args.code, args.state_migration_gas)
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_static_gas(ADD_DEPLOYMENT_GAS)
+                    .update_deployment_info(contract_id, deployment_info.clone()),
+            )
     }
 }
 
-#[ext_contract(ext_self)]
-pub trait ExtAuroraControllerFactory {
-    /// Callback which adds or overwrites deployment info after successful contract deployment,
-    /// upgrading or downgrading.
-    fn update_deployment_info(&mut self, contract_id: AccountId, deployment_info: &DeploymentInfo);
-}
-
-fn upgrade_promise(
-    contract_id: AccountId,
-    blob: Vec<u8>,
-    deployment_info: &DeploymentInfo,
-) -> Promise {
-    Promise::new(contract_id.clone())
-        .function_call(
-            "upgrade".to_string(),
-            blob,
-            NearToken::from_near(0),
-            UPGRADE_GAS,
-        )
-        .then(
-            ext_self::ext(env::current_account_id())
-                .with_static_gas(ADD_DEPLOYMENT_GAS)
-                .update_deployment_info(contract_id, deployment_info),
-        )
+#[ext_contract(ext_aurora)]
+pub trait ExtAurora {
+    fn upgrade(
+        &mut self,
+        #[serializer(borsh)] code: Vec<u8>,
+        #[serializer(borsh)] state_migration_gas: Option<u64>,
+    );
 }

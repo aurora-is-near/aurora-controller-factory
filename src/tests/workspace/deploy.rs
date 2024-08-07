@@ -1,10 +1,11 @@
-use super::utils;
-use crate::tests::{BLOB_3_4_0, BLOB_3_5_0, HASH_3_4_0, HASH_3_5_0};
-use crate::types::DeploymentInfo;
 use near_sdk::serde_json::json;
 use near_workspaces::types::NearToken;
 use near_workspaces::AccountId;
 use std::collections::BTreeMap;
+
+use super::utils;
+use crate::tests::{BLOB_3_4_0, BLOB_3_5_0, HASH_3_4_0, HASH_3_5_0, MIGRATION_GAS};
+use crate::types::DeploymentInfo;
 
 #[tokio::test]
 async fn test_deploy_contract() {
@@ -28,7 +29,7 @@ async fn test_deploy_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -37,7 +38,7 @@ async fn test_deploy_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let new_contract_id: AccountId = "aurora.factory-owner.test.near".parse().unwrap();
     let result = factory_owner
@@ -58,8 +59,7 @@ async fn test_deploy_contract() {
         .transact()
         .await
         .unwrap();
-    dbg!(&result);
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let deployments: Vec<DeploymentInfo> = factory_owner
         .view(factory.id(), "get_deployments")
@@ -98,7 +98,7 @@ async fn test_deploy_more_than_one_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -107,7 +107,7 @@ async fn test_deploy_more_than_one_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let new_1_contract_id: AccountId = "aurora-1.factory-owner.test.near".parse().unwrap();
     let init_args_1 = json!({
@@ -129,7 +129,7 @@ async fn test_deploy_more_than_one_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
     let deploy_time_1 = worker
         .view_block()
         .block_hash(result.unwrap().outcome().block_hash)
@@ -148,7 +148,7 @@ async fn test_deploy_more_than_one_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -157,7 +157,7 @@ async fn test_deploy_more_than_one_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let new_2_contract_id: AccountId = "aurora-2.factory-owner.test.near".parse().unwrap();
     let init_args_2 = json!({
@@ -180,7 +180,7 @@ async fn test_deploy_more_than_one_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
     let deploy_time_2 = worker
         .view_block()
         .block_hash(result.unwrap().outcome().block_hash)
@@ -248,7 +248,7 @@ async fn test_add_deployment_info_for_existed_contract() {
             .transact()
             .await
             .unwrap();
-        assert!(result.is_success());
+        assert!(result.is_success(), "{result:#?}");
 
         silo_contract
     };
@@ -272,7 +272,7 @@ async fn test_add_deployment_info_for_existed_contract() {
             .transact()
             .await
             .unwrap();
-        assert!(result.is_success());
+        assert!(result.is_success(), "{result:#?}");
     }
 
     let result = factory_owner
@@ -286,7 +286,7 @@ async fn test_add_deployment_info_for_existed_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -295,18 +295,19 @@ async fn test_add_deployment_info_for_existed_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "upgrade")
         .args_json(json!({
-            "contract_id": silo_contract.id()
+            "contract_id": silo_contract.id(),
+            "state_migration_gas": MIGRATION_GAS
         }))
         .max_gas()
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     // Check that the version has been changed to 3.5.0.
     let result = factory_owner.view(silo_contract.id(), "get_version").await;

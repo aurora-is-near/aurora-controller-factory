@@ -1,9 +1,10 @@
-use super::utils;
-use crate::tests::{BLOB_3_4_0, BLOB_3_5_0, HASH_3_4_0, HASH_3_5_0};
-use crate::types::DeploymentInfo;
 use near_sdk::serde_json::json;
 use near_workspaces::types::NearToken;
 use near_workspaces::AccountId;
+
+use super::utils;
+use crate::tests::{BLOB_3_4_0, BLOB_3_5_0, HASH_3_4_0, HASH_3_5_0};
+use crate::types::DeploymentInfo;
 
 #[tokio::test]
 async fn test_downgrade_contract() {
@@ -20,7 +21,7 @@ async fn test_downgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -29,7 +30,7 @@ async fn test_downgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
@@ -42,8 +43,7 @@ async fn test_downgrade_contract() {
         .transact()
         .await
         .unwrap();
-    dbg!(&result);
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -52,7 +52,7 @@ async fn test_downgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let new_contract_id: AccountId = "aurora.factory-owner.test.near".parse().unwrap();
 
@@ -94,7 +94,7 @@ async fn test_downgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
     let result = factory_owner.view(&new_contract_id, "get_version").await;
     let version = String::from_utf8(result.unwrap().result).unwrap();
     assert_eq!(version.trim_end(), "3.4.0");

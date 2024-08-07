@@ -3,8 +3,8 @@ name = "aurora-controller-factory"
 authors = ["Aurora Labs <hello@aurora.dev>"]
 version = "0.1.0"
 edition = "2021"
-homepage = "https://github.com/aurora-is-near/aurora-factory"
-repository = "https://github.com/aurora-is-near/aurora-factory"
+homepage = "https://github.com/aurora-is-near/aurora-controller-factory"
+repository = "https://github.com/aurora-is-near/aurora-controller-factory"
 license = "CC0-1.0"
 readme = "README.md"
 publish = false
@@ -22,7 +22,6 @@ anyhow = "1"
 hex = "0.4"
 near-sdk = "5.2"
 near-contract-standards = "5.2"
-near-gas = "0.2"
 near-plugins = { git = "https://github.com/aleksuss/near-plugins.git", rev = "a1393df" }
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
