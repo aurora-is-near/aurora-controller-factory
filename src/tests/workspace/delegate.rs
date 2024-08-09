@@ -1,12 +1,13 @@
-use super::utils;
-use crate::tests::{BLOB_3_4_0, HASH_3_4_0};
-use crate::types::FunctionCallArgs;
-use near_gas::NearGas;
 use near_sdk::near;
 use near_sdk::serde_json::json;
+use near_sdk::Gas;
 use near_workspaces::types::NearToken;
 use near_workspaces::{Account, AccountId, Contract};
 use std::str::FromStr;
+
+use super::utils;
+use crate::tests::{BLOB_3_4_0, HASH_3_4_0};
+use crate::types::FunctionCallArgs;
 
 #[tokio::test]
 async fn test_delegate_execution() {
@@ -20,14 +21,14 @@ async fn test_delegate_execution() {
                 function_name: "set_owner".to_string(),
                 arguments: near_sdk::borsh::to_vec(&contract_id).map(Into::into).unwrap(),
                 amount: NearToken::from_near(0),
-                gas: NearGas::from_tgas(5)
+                gas: Gas::from_tgas(5)
             }]
         }))
         .max_gas()
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let bytes = factory_owner
         .call(&contract_id, "get_owner")
@@ -58,8 +59,7 @@ async fn test_delegate_pause() {
         .transact()
         .await
         .unwrap();
-    dbg!(&result);
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(&contract_id, "set_owner")
@@ -89,7 +89,7 @@ async fn create_factory() -> (Account, Contract, AccountId) {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -98,7 +98,7 @@ async fn create_factory() -> (Account, Contract, AccountId) {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let contract_id: AccountId = "aurora-1.factory-owner.test.near".parse().unwrap();
     let init_args = json!({
@@ -120,7 +120,7 @@ async fn create_factory() -> (Account, Contract, AccountId) {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     (factory_owner, factory, contract_id)
 }

@@ -1,8 +1,9 @@
-use crate::Role;
 use near_sdk::serde_json::json;
 use near_workspaces::network::Sandbox;
 use near_workspaces::types::NearToken;
 use near_workspaces::{Account, AccountId, Contract, Worker};
+
+use crate::Role;
 
 const FACTORY_OWNER: &str = "factory-owner";
 const AURORA_FACTORY_CONTRACT_PATH: &str =

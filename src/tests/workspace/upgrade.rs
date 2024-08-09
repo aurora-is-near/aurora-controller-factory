@@ -1,8 +1,9 @@
-use super::utils;
-use crate::tests::{BLOB_3_4_0, BLOB_3_5_0, HASH_3_4_0, HASH_3_5_0};
 use near_sdk::serde_json::json;
 use near_workspaces::types::NearToken;
 use near_workspaces::AccountId;
+
+use super::utils;
+use crate::tests::{BLOB_3_4_0, BLOB_3_5_0, HASH_3_4_0, HASH_3_5_0, MIGRATION_GAS};
 
 #[tokio::test]
 async fn test_upgrade_contract() {
@@ -18,7 +19,7 @@ async fn test_upgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -27,7 +28,7 @@ async fn test_upgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let new_contract_id: AccountId = "aurora.factory-owner.test.near".parse().unwrap();
     let result = factory_owner
@@ -48,7 +49,7 @@ async fn test_upgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
@@ -61,7 +62,7 @@ async fn test_upgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -70,16 +71,16 @@ async fn test_upgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "upgrade")
-        .args_json((&new_contract_id, HASH_3_5_0))
+        .args_json((&new_contract_id, HASH_3_5_0, MIGRATION_GAS))
         .max_gas()
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner.view(&new_contract_id, "get_version").await;
     let version = String::from_utf8(result.unwrap().result).unwrap();
@@ -100,7 +101,7 @@ async fn test_upgrade_contract_to_previous_version() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -109,7 +110,7 @@ async fn test_upgrade_contract_to_previous_version() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let new_contract_id: AccountId = "aurora.factory-owner.test.near".parse().unwrap();
     let result = factory_owner
@@ -130,7 +131,7 @@ async fn test_upgrade_contract_to_previous_version() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
@@ -143,7 +144,7 @@ async fn test_upgrade_contract_to_previous_version() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -152,11 +153,11 @@ async fn test_upgrade_contract_to_previous_version() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "upgrade")
-        .args_json((&new_contract_id, HASH_3_4_0))
+        .args_json((&new_contract_id, HASH_3_4_0, MIGRATION_GAS))
         .max_gas()
         .transact()
         .await
@@ -183,7 +184,7 @@ async fn test_unrestricted_upgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -192,7 +193,7 @@ async fn test_unrestricted_upgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let new_contract_id: AccountId = "aurora.factory-owner.test.near".parse().unwrap();
     let result = factory_owner
@@ -213,7 +214,7 @@ async fn test_unrestricted_upgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
@@ -226,7 +227,7 @@ async fn test_unrestricted_upgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
@@ -235,17 +236,16 @@ async fn test_unrestricted_upgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "unrestricted_upgrade")
-        .args_json((&new_contract_id, HASH_3_4_0))
+        .args_json((&new_contract_id, HASH_3_4_0, MIGRATION_GAS))
         .max_gas()
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
-
+    assert!(result.is_success(), "{result:#?}");
     // Check that the version has been changed to 3.4.0.
     let result = factory_owner.view(&new_contract_id, "get_version").await;
     let version = String::from_utf8(result.unwrap().result).unwrap();

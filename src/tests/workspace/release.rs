@@ -1,6 +1,7 @@
+use near_sdk::serde_json::json;
+
 use super::utils;
 use crate::types::ReleaseInfo;
-use near_sdk::serde_json::json;
 
 #[tokio::test]
 async fn test_add_new_release() {
@@ -17,7 +18,7 @@ async fn test_add_new_release() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")

@@ -1,8 +1,7 @@
-use near_gas::NearGas;
 use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::json_types::Base64VecU8;
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{near, NearToken};
+use near_sdk::{near, Gas, NearToken};
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 use std::io::{Read, Write};
@@ -96,7 +95,14 @@ pub struct FunctionCallArgs {
     pub function_name: String,
     pub arguments: Base64VecU8,
     pub amount: NearToken,
-    pub gas: NearGas,
+    pub gas: Gas,
+}
+
+#[derive(Debug)]
+#[near(serializers = [borsh])]
+pub struct UpgradeArgs {
+    pub code: Vec<u8>,
+    pub state_migration_gas: Option<u64>,
 }
 
 #[test]
