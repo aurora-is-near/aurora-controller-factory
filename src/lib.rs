@@ -101,8 +101,6 @@ impl AuroraControllerFactory {
 
         // Optionally grant `Role::DAO`.
         if let Some(account_id) = dao {
-            let res = contract.acl_add_super_admin(account_id.clone());
-            require!(Some(true) == res, "Failed to grant Super Admin role");
             let res = contract.acl_grant_role(Role::DAO.into(), account_id);
             require!(Some(true) == res, "Failed to grant DAO role");
         }
