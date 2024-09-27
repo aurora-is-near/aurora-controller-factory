@@ -94,12 +94,17 @@ impl AuroraControllerFactory {
             latest: LazyOption::new(keys::Prefix::LatestRelease, None),
         };
 
-        contract.acl_init_super_admin(env::current_account_id());
+        require!(
+            contract.acl_init_super_admin(env::current_account_id()),
+            "Failed to init Super Admin role"
+        );
 
         // Optionally grant `Role::DAO`.
         if let Some(account_id) = dao {
+            let res = contract.acl_add_super_admin(account_id.clone());
+            require!(Some(true) == res, "Failed to grant Super Admin role");
             let res = contract.acl_grant_role(Role::DAO.into(), account_id);
-            require!(Some(true) == res, "Failed to grant role");
+            require!(Some(true) == res, "Failed to grant DAO role");
         }
 
         contract
