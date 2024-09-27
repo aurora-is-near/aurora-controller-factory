@@ -1,6 +1,5 @@
 use near_plugins::{
-    access_control, access_control_any, AccessControlRole, AccessControllable, Ownable, Pausable,
-    Upgradable,
+    access_control, access_control_any, AccessControlRole, AccessControllable, Pausable, Upgradable,
 };
 use near_sdk::borsh::BorshDeserialize;
 use near_sdk::collections::LazyOption;
@@ -59,8 +58,7 @@ pub enum Role {
 }
 
 /// Controller contract for deploying and upgrading contracts.
-#[derive(Ownable, PanicOnDefault, Pausable, Upgradable)]
-#[ownable]
+#[derive(PanicOnDefault, Pausable, Upgradable)]
 #[access_control(role_type(Role))]
 #[upgradable(access_control_roles(
     code_stagers(Role::DAO),
@@ -88,7 +86,7 @@ impl AuroraControllerFactory {
     #[must_use]
     #[init]
     #[allow(clippy::use_self)]
-    pub fn new(owner_id: AccountId) -> Self {
+    pub fn new(dao: Option<AccountId>) -> Self {
         let mut contract = Self {
             releases: IterableMap::new(keys::Prefix::Releases),
             blobs: IterableMap::new(keys::Prefix::Blobs),
@@ -96,8 +94,14 @@ impl AuroraControllerFactory {
             latest: LazyOption::new(keys::Prefix::LatestRelease, None),
         };
 
-        contract.owner_set(Some(owner_id));
-        contract.acl_init_super_admin(env::predecessor_account_id());
+        contract.acl_init_super_admin(env::current_account_id());
+
+        // Optionally grant `Role::DAO`.
+        if let Some(account_id) = dao {
+            let res = contract.acl_grant_role(Role::DAO.into(), account_id);
+            require!(Some(true) == res, "Failed to grant role");
+        }
+
         contract
     }
 
