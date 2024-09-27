@@ -20,15 +20,15 @@ pedantic = "deny"
 [dependencies]
 anyhow = "1"
 hex = "0.4"
-near-sdk = "5.2"
-near-contract-standards = "5.2"
+near-sdk = "5.5"
+near-contract-standards = "5.5"
 near-plugins = { git = "https://github.com/aleksuss/near-plugins.git", rev = "a1393df" }
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
-near-sdk = { version = "5.2", features = ["unit-testing"] }
-near-workspaces = "0.11"
+near-sdk = { version = "5.5", features = ["unit-testing"] }
+near-workspaces = "0.14"
 tokio = { version = "1", features = ["macros"] }
 
 [profile.release]

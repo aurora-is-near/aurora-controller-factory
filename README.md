@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/aurora-is-near/aurora-controller-factory/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/aurora-is-near/aurora-controller-factory/actions/workflows/rust.yml)
 
-The main purpose of the contract is to provide the possibility to move all ops-related 
-functions into a separate controller contract. Ops-related functions include: deployment, 
-upgrading, downgrading, and delegation of execution for some transactions. The controller 
+The main purpose of the contract is to provide the possibility to move all ops-related
+functions into a separate controller contract. Ops-related functions include: deployment,
+upgrading, downgrading, and delegation of execution for some transactions. The controller
 contract implements role-based access control using the [near-plugins].
 
 ### Useful commands
@@ -20,7 +20,7 @@ contract implements role-based access control using the [near-plugins].
 ```rust
 /// Initializes a new controller contract.
 #[init]
-fn new(owner_id: AccountId) -> Self;
+fn new(dao: Option<AccountId>) -> Self;
 
 /// Attaches new full access key to the controller contract.
 #[access_control_any(roles(Role::DAO))]
@@ -76,7 +76,7 @@ fn upgrade(&self, contract_id: AccountId, hash: Option<String>) -> Promise;
 
 /// Upgrades a contract with account id and provided hash without checking version.
 #[access_control_any(roles(Role::DAO))]
-fn unrestricted_upgrade(&self, contract_id: AccountId, hash: String) -> Promise;   
+fn unrestricted_upgrade(&self, contract_id: AccountId, hash: String) -> Promise;
 
 /// Downgrades the contract with account id.
 #[access_control_any(roles(Role::DAO))]
@@ -152,4 +152,5 @@ pub struct DeploymentInfo {
 [near-plugins]: https://github.com/aurora-is-near/near-plugins
 
 ### LICENSE
+
 **Aurora Controller Factory** is under [CC0 1.0 Universal](LICENSE)
