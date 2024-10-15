@@ -411,9 +411,13 @@ impl AuroraControllerFactory {
     /// Downgrades the contract with account id.
     #[access_control_any(roles(Role::DAO))]
     pub fn downgrade(&mut self, contract_id: AccountId) -> Promise {
-        let deployment_info = self.deployments.get_mut(&contract_id).unwrap_or_else(|| {
-            panic!("contract with account id: {contract_id} hasn't been deployed")
-        });
+        let mut deployment_info =
+            self.deployments
+                .get(&contract_id)
+                .cloned()
+                .unwrap_or_else(|| {
+                    panic!("contract with account id: {contract_id} hasn't been deployed")
+                });
         let release_info = self.releases.get(&deployment_info.hash).unwrap_or_else(|| {
             panic!(
                 "release info doesn't exist for hash: {}",
@@ -451,7 +455,7 @@ impl AuroraControllerFactory {
 
 impl AuroraControllerFactory {
     fn upgrade_internal(
-        &mut self,
+        &self,
         contract_id: AccountId,
         hash: Option<String>,
         skip_version_check: bool,
@@ -466,9 +470,13 @@ impl AuroraControllerFactory {
             .get(&hash)
             .unwrap_or_else(|| panic!("no release info for hash: {hash}"));
 
-        let deployment_info = self.deployments.get_mut(&contract_id).unwrap_or_else(|| {
-            panic!("contract with account id: {contract_id} hasn't been deployed")
-        });
+        let mut deployment_info =
+            self.deployments
+                .get(&contract_id)
+                .cloned()
+                .unwrap_or_else(|| {
+                    panic!("contract with account id: {contract_id} hasn't been deployed")
+                });
 
         require!(
             release_info.version > deployment_info.version || skip_version_check,
@@ -500,7 +508,7 @@ impl AuroraControllerFactory {
     fn upgrade_promise(
         contract_id: AccountId,
         args: UpgradeArgs,
-        deployment_info: &DeploymentInfo,
+        deployment_info: DeploymentInfo,
     ) -> Promise {
         ext_aurora::ext(contract_id.clone())
             .with_static_gas(
@@ -513,7 +521,7 @@ impl AuroraControllerFactory {
             .then(
                 Self::ext(env::current_account_id())
                     .with_static_gas(ADD_DEPLOYMENT_GAS)
-                    .update_deployment_info(contract_id, deployment_info.clone()),
+                    .update_deployment_info(contract_id, deployment_info),
             )
     }
 }
