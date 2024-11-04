@@ -6,7 +6,7 @@ use near_workspaces::{Account, AccountId, Contract};
 use std::str::FromStr;
 
 use super::utils;
-use crate::tests::{BLOB_3_4_0, HASH_3_4_0};
+use crate::tests::{BLOB_3_6_4, HASH_3_6_4};
 use crate::types::FunctionCallArgs;
 
 #[tokio::test]
@@ -84,8 +84,8 @@ async fn create_factory() -> (Account, Contract, AccountId) {
         .call(factory.id(), "add_release_info")
         .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
-            "hash": HASH_3_4_0,
-            "version": "3.4.0",
+            "hash": HASH_3_6_4,
+            "version": "3.6.4",
             "is_latest": true,
             "downgrade_hash": null
         }))
@@ -97,7 +97,7 @@ async fn create_factory() -> (Account, Contract, AccountId) {
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
         .deposit(NearToken::from_yoctonear(1))
-        .args(BLOB_3_4_0.to_vec())
+        .args(BLOB_3_6_4.to_vec())
         .max_gas()
         .transact()
         .await

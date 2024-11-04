@@ -4,7 +4,7 @@ use near_workspaces::AccountId;
 use std::collections::BTreeMap;
 
 use super::utils;
-use crate::tests::{BLOB_3_4_0, BLOB_3_5_0, HASH_3_4_0, HASH_3_5_0, MIGRATION_GAS};
+use crate::tests::{BLOB_3_6_4, BLOB_3_7_0, HASH_3_6_4, HASH_3_7_0, MIGRATION_GAS};
 use crate::types::DeploymentInfo;
 
 #[tokio::test]
@@ -22,8 +22,8 @@ async fn test_deploy_contract() {
         .call(factory.id(), "add_release_info")
         .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
-            "hash": HASH_3_4_0,
-            "version": "3.4.0",
+            "hash": HASH_3_6_4,
+            "version": "3.6.4",
             "is_latest": true,
             "downgrade_hash": null
         }))
@@ -35,7 +35,7 @@ async fn test_deploy_contract() {
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
         .deposit(NearToken::from_yoctonear(1))
-        .args(BLOB_3_4_0.to_vec())
+        .args(BLOB_3_6_4.to_vec())
         .max_gas()
         .transact()
         .await
@@ -73,7 +73,7 @@ async fn test_deploy_contract() {
 
     let result = factory_owner.view(&new_contract_id, "get_version").await;
     let version = String::from_utf8(result.unwrap().result).unwrap();
-    assert_eq!(version.trim_end(), "3.4.0");
+    assert_eq!(version.trim_end(), "3.6.4");
 }
 
 #[tokio::test]
@@ -93,8 +93,8 @@ async fn test_deploy_more_than_one_contract() {
         .call(factory.id(), "add_release_info")
         .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
-            "hash": HASH_3_4_0,
-            "version": "3.4.0",
+            "hash": HASH_3_6_4,
+            "version": "3.6.4",
             "is_latest": true,
             "downgrade_hash": null
         }))
@@ -106,7 +106,7 @@ async fn test_deploy_more_than_one_contract() {
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
         .deposit(NearToken::from_yoctonear(1))
-        .args(BLOB_3_4_0.to_vec())
+        .args(BLOB_3_6_4.to_vec())
         .max_gas()
         .transact()
         .await
@@ -145,8 +145,8 @@ async fn test_deploy_more_than_one_contract() {
         .call(factory.id(), "add_release_info")
         .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
-            "hash": HASH_3_5_0,
-            "version": "3.5.0",
+            "hash": HASH_3_7_0,
+            "version": "3.7.0",
             "is_latest": true,
             "downgrade_hash": null
         }))
@@ -158,7 +158,7 @@ async fn test_deploy_more_than_one_contract() {
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
         .deposit(NearToken::from_yoctonear(1))
-        .args(BLOB_3_5_0.to_vec())
+        .args(BLOB_3_7_0.to_vec())
         .max_gas()
         .transact()
         .await
@@ -177,7 +177,7 @@ async fn test_deploy_more_than_one_contract() {
         .call(factory.id(), "deploy")
         .args_json(json!({
             "new_contract_id": new_2_contract_id.clone(),
-            "blob_hash": HASH_3_5_0,
+            "blob_hash": HASH_3_7_0,
             "init_method": "new",
             "init_args": &init_args_2
         }))
@@ -205,17 +205,17 @@ async fn test_deploy_more_than_one_contract() {
         deployments,
         vec![
             DeploymentInfo {
-                hash: HASH_3_4_0.to_string(),
-                version: "3.4.0".parse().unwrap(),
+                hash: HASH_3_6_4.to_string(),
+                version: "3.6.4".parse().unwrap(),
                 deployment_time: deploy_time_1,
-                upgrade_times: [(deploy_time_1, "3.4.0".parse().unwrap())].into(),
+                upgrade_times: [(deploy_time_1, "3.6.4".parse().unwrap())].into(),
                 init_args: near_sdk::serde_json::to_string(&init_args_1).unwrap(),
             },
             DeploymentInfo {
-                hash: HASH_3_5_0.to_string(),
-                version: "3.5.0".parse().unwrap(),
+                hash: HASH_3_7_0.to_string(),
+                version: "3.7.0".parse().unwrap(),
                 deployment_time: deploy_time_2,
-                upgrade_times: [(deploy_time_2, "3.5.0".parse().unwrap())].into(),
+                upgrade_times: [(deploy_time_2, "3.7.0".parse().unwrap())].into(),
                 init_args: near_sdk::serde_json::to_string(&init_args_2).unwrap(),
             }
         ]
@@ -226,7 +226,7 @@ async fn test_deploy_more_than_one_contract() {
 async fn test_add_deployment_info_for_existed_contract() {
     let (factory_owner, factory, worker) = utils::crate_factory().await.unwrap();
 
-    // Deploy silo contract 3.4.0 manually.
+    // Deploy silo contract 3.6.4 manually.
     let silo_contract = {
         let contract_id = worker
             .root_account()
@@ -238,7 +238,7 @@ async fn test_add_deployment_info_for_existed_contract() {
             .unwrap()
             .into_result()
             .unwrap();
-        let result = contract_id.deploy(BLOB_3_4_0).await.unwrap();
+        let result = contract_id.deploy(BLOB_3_6_4).await.unwrap();
         assert!(result.is_success(), "{:?}", result.details);
         let silo_contract = result.unwrap();
 
@@ -262,8 +262,8 @@ async fn test_add_deployment_info_for_existed_contract() {
     // Adding deployment info of previously deployed silo contract to the controller contract.
     {
         let deployment_info = DeploymentInfo {
-            hash: HASH_3_4_0.to_string(),
-            version: "3.4.0".parse().unwrap(),
+            hash: HASH_3_6_4.to_string(),
+            version: "3.6.4".parse().unwrap(),
             deployment_time: 0,
             upgrade_times: BTreeMap::default(),
             init_args: String::default(),
@@ -286,8 +286,8 @@ async fn test_add_deployment_info_for_existed_contract() {
         .call(factory.id(), "add_release_info")
         .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
-            "hash": HASH_3_5_0,
-            "version": "3.5.0",
+            "hash": HASH_3_7_0,
+            "version": "3.7.0",
             "is_latest": true,
             "downgrade_hash": null
         }))
@@ -299,7 +299,7 @@ async fn test_add_deployment_info_for_existed_contract() {
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
         .deposit(NearToken::from_yoctonear(1))
-        .args(BLOB_3_5_0.to_vec())
+        .args(BLOB_3_7_0.to_vec())
         .max_gas()
         .transact()
         .await
@@ -319,8 +319,8 @@ async fn test_add_deployment_info_for_existed_contract() {
         .unwrap();
     assert!(result.is_success(), "{result:#?}");
 
-    // Check that the version has been changed to 3.5.0.
+    // Check that the version has been changed to 3.7.0.
     let result = factory_owner.view(silo_contract.id(), "get_version").await;
     let version = String::from_utf8(result.unwrap().result).unwrap();
-    assert_eq!(version.trim_end(), "3.5.0");
+    assert_eq!(version.trim_end(), "3.7.0");
 }
