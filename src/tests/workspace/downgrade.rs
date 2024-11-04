@@ -3,7 +3,7 @@ use near_workspaces::types::NearToken;
 use near_workspaces::AccountId;
 
 use super::utils;
-use crate::tests::{BLOB_3_4_0, BLOB_3_5_0, HASH_3_4_0, HASH_3_5_0};
+use crate::tests::{BLOB_3_6_4, BLOB_3_7_0, HASH_3_6_4, HASH_3_7_0};
 use crate::types::DeploymentInfo;
 
 #[tokio::test]
@@ -13,8 +13,8 @@ async fn test_downgrade_contract() {
     let result = factory_owner
         .call(factory.id(), "add_release_info")
         .args_json(json!({
-            "hash": HASH_3_4_0,
-            "version": "3.4.0",
+            "hash": HASH_3_6_4,
+            "version": "3.6.4",
             "is_latest": true,
             "downgrade_hash": null
         }))
@@ -25,7 +25,7 @@ async fn test_downgrade_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
-        .args(BLOB_3_4_0.to_vec())
+        .args(BLOB_3_6_4.to_vec())
         .max_gas()
         .transact()
         .await
@@ -35,10 +35,10 @@ async fn test_downgrade_contract() {
     let result = factory_owner
         .call(factory.id(), "add_release_info")
         .args_json(json!({
-            "hash": HASH_3_5_0,
-            "version": "3.5.0",
+            "hash": HASH_3_7_0,
+            "version": "3.7.0",
             "is_latest": true,
-            "downgrade_hash": HASH_3_4_0 // Allow to downgrade for version 3.4.0
+            "downgrade_hash": HASH_3_6_4 // Allow to downgrade for version 3.6.4
         }))
         .transact()
         .await
@@ -47,7 +47,7 @@ async fn test_downgrade_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
-        .args(BLOB_3_5_0.to_vec())
+        .args(BLOB_3_7_0.to_vec())
         .max_gas()
         .transact()
         .await
@@ -83,7 +83,7 @@ async fn test_downgrade_contract() {
         .json()
         .unwrap();
 
-    assert_eq!(deployments[0].version, "3.5.0".parse().unwrap());
+    assert_eq!(deployments[0].version, "3.7.0".parse().unwrap());
 
     let result = factory_owner
         .call(factory.id(), "downgrade")
@@ -97,7 +97,7 @@ async fn test_downgrade_contract() {
     assert!(result.is_success(), "{result:#?}");
     let result = factory_owner.view(&new_contract_id, "get_version").await;
     let version = String::from_utf8(result.unwrap().result).unwrap();
-    assert_eq!(version.trim_end(), "3.4.0");
+    assert_eq!(version.trim_end(), "3.6.4");
 
     let deployments: Vec<DeploymentInfo> = factory_owner
         .view(factory.id(), "get_deployments")
@@ -106,5 +106,5 @@ async fn test_downgrade_contract() {
         .json()
         .unwrap();
 
-    assert_eq!(deployments[0].version, "3.4.0".parse().unwrap());
+    assert_eq!(deployments[0].version, "3.6.4".parse().unwrap());
 }
