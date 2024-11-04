@@ -273,6 +273,7 @@ async fn test_upgrade_contract_with_small_gas_for_migration() {
     let (factory_owner, factory, _) = utils::crate_factory().await.unwrap();
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "hash": HASH_3_6_4,
             "version": "3.6.4",
@@ -286,6 +287,7 @@ async fn test_upgrade_contract_with_small_gas_for_migration() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
+        .deposit(NearToken::from_yoctonear(1))
         .args(BLOB_3_6_4.to_vec())
         .max_gas()
         .transact()
@@ -323,6 +325,7 @@ async fn test_upgrade_contract_with_small_gas_for_migration() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "hash": HASH_3_7_0,
             "version": "3.7.0",
@@ -336,6 +339,7 @@ async fn test_upgrade_contract_with_small_gas_for_migration() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
+        .deposit(NearToken::from_yoctonear(1))
         .args(BLOB_3_7_0.to_vec())
         .max_gas()
         .transact()
@@ -345,6 +349,7 @@ async fn test_upgrade_contract_with_small_gas_for_migration() {
 
     let result = factory_owner
         .call(factory.id(), "upgrade")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json((
             &new_contract_id,
             HASH_3_7_0,
