@@ -15,6 +15,7 @@ async fn test_delegate_execution() {
 
     let result = factory_owner
         .call(factory.id(), "delegate_execution")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "receiver_id": &contract_id,
             "actions": vec![FunctionCallArgs {
@@ -51,6 +52,7 @@ async fn test_delegate_pause() {
 
     let result = factory_owner
         .call(factory.id(), "delegate_pause")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "receiver_id": &contract_id,
             "pause_method_name": "pause_contract"
@@ -80,6 +82,7 @@ async fn create_factory() -> (Account, Contract, AccountId) {
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "hash": HASH_3_4_0,
             "version": "3.4.0",
@@ -93,6 +96,7 @@ async fn create_factory() -> (Account, Contract, AccountId) {
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
+        .deposit(NearToken::from_yoctonear(1))
         .args(BLOB_3_4_0.to_vec())
         .max_gas()
         .transact()

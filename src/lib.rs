@@ -7,8 +7,8 @@ use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::serde_json::{json, Value};
 use near_sdk::store::IterableMap;
 use near_sdk::{
-    env, ext_contract, near, require, AccountId, Gas, NearToken, PanicOnDefault, Promise,
-    PromiseResult, PublicKey,
+    assert_one_yocto, env, ext_contract, near, require, AccountId, Gas, NearToken, PanicOnDefault,
+    Promise, PromiseResult, PublicKey,
 };
 
 use crate::event::Event;
@@ -116,7 +116,9 @@ impl AuroraControllerFactory {
 
     /// Attaches new full access key to the controller contract.
     #[access_control_any(roles(Role::DAO))]
+    #[payable]
     pub fn attach_full_access_key(&mut self, public_key: PublicKey) -> Promise {
+        assert_one_yocto();
         event::emit(
             Event::AttachFullAccessKey,
             &json!({"public_key": &public_key}),
@@ -126,11 +128,16 @@ impl AuroraControllerFactory {
 
     /// Delegates an execution of actions to the specified receiver.
     #[access_control_any(roles(Role::DAO))]
+    #[payable]
     pub fn delegate_execution(
-        &self,
+        &mut self,
         receiver_id: AccountId,
         actions: Vec<FunctionCallArgs>,
     ) -> Promise {
+        require!(
+            !env::attached_deposit().is_zero(),
+            "required at least 1 yoctonear",
+        );
         event::emit(
             Event::DelegatedExecution,
             &json!({
@@ -138,9 +145,13 @@ impl AuroraControllerFactory {
                 "actions": &actions
             }),
         );
+        let mut total = env::attached_deposit();
         actions
             .into_iter()
             .fold(Promise::new(receiver_id), |promise, action| {
+                total = total
+                    .checked_sub(action.amount)
+                    .unwrap_or_else(|| env::panic_str("not enough deposit attached"));
                 promise.function_call(
                     action.function_name,
                     action.arguments.into(),
@@ -152,11 +163,13 @@ impl AuroraControllerFactory {
 
     /// Pauses the contract with provided account id.
     #[access_control_any(roles(Role::DAO, Role::Pauser))]
+    #[payable]
     pub fn delegate_pause(
-        &self,
+        &mut self,
         receiver_id: AccountId,
         pause_method_name: Option<String>,
     ) -> Promise {
+        assert_one_yocto();
         let function_name = match pause_method_name {
             Some(method) if ALLOWED_PAUSE_METHODS.contains(&method.as_str()) => method,
             Some(method) => panic!("pause method: {method} is not allowed"),
@@ -177,6 +190,7 @@ impl AuroraControllerFactory {
 
     /// Adds new contract release info.
     #[access_control_any(roles(Role::DAO))]
+    #[payable]
     pub fn add_release_info(
         &mut self,
         hash: String,
@@ -185,6 +199,7 @@ impl AuroraControllerFactory {
         downgrade_hash: Option<String>,
         description: Option<String>,
     ) {
+        assert_one_yocto();
         require!(
             self.releases.get(&hash).is_none(),
             "release info for the hash is already exist"
@@ -207,7 +222,9 @@ impl AuroraControllerFactory {
     }
 
     /// Adds bytes of the contract smart contract to the corresponding release info.
+    #[payable]
     pub fn add_release_blob(&mut self) {
+        assert_one_yocto();
         let blob = env::input().unwrap_or_else(|| panic!("no blob's bytes were provided"));
         let hash = utils::hash_256(&blob);
         let release_info = self.releases.get_mut(&hash).unwrap_or_else(|| {
@@ -222,7 +239,9 @@ impl AuroraControllerFactory {
 
     /// Marks the release with the hash: `hash` as latest.
     #[access_control_any(roles(Role::DAO, Role::Releaser))]
+    #[payable]
     pub fn set_latest_release(&mut self, hash: &String) {
+        assert_one_yocto();
         let new_latest = self.releases.get(hash).unwrap_or_else(|| {
             panic!("release info doesn't exist for hash: {hash}");
         });
@@ -240,7 +259,9 @@ impl AuroraControllerFactory {
 
     /// Removes the release info for hash: `hash`.
     #[access_control_any(roles(Role::DAO))]
+    #[payable]
     pub fn remove_release(&mut self, hash: &String) {
+        assert_one_yocto();
         let release_info = self.releases.remove(hash).unwrap_or_else(|| {
             panic!("release info doesn't exist for hash: {hash}");
         });
@@ -281,13 +302,18 @@ impl AuroraControllerFactory {
 
     /// Deploys a new contract on the release info that corresponds to the provided hash.
     #[access_control_any(roles(Role::DAO, Role::Deployer))]
+    #[payable]
     pub fn deploy(
-        &self,
+        &mut self,
         new_contract_id: AccountId,
         init_method: String,
         init_args: Value,
         blob_hash: Option<String>,
     ) -> Promise {
+        require!(
+            !env::attached_deposit().is_zero(),
+            "required at least 1 yoctonear"
+        );
         // Check that the `new_contract_id` wasn't used for another contract before.
         require!(
             self.deployments.get(&new_contract_id).is_none(),
@@ -342,7 +368,9 @@ impl AuroraControllerFactory {
     /// Adds new deployment info of previously deployed contract.
     /// E.g. the contract which has been deployed by not this controller contract.
     #[access_control_any(roles(Role::DAO))]
+    #[payable]
     pub fn add_deployment_info(&mut self, contract_id: AccountId, deployment_info: DeploymentInfo) {
+        assert_one_yocto();
         event::emit(
             Event::AddDeploymentInfo,
             &json!({"contract_id": contract_id, "deployment_info": deployment_info}),
@@ -376,12 +404,15 @@ impl AuroraControllerFactory {
 
     /// Upgrades a contract with account id and provided or the latest hash.
     #[access_control_any(roles(Role::DAO, Role::Updater))]
+    #[payable]
     pub fn upgrade(
         &mut self,
         contract_id: AccountId,
         hash: Option<String>,
         state_migration_gas: Option<u64>,
     ) -> Promise {
+        assert_one_yocto();
+
         self.upgrade_internal(
             contract_id,
             hash,
@@ -393,12 +424,14 @@ impl AuroraControllerFactory {
 
     /// Upgrades a contract with account id and provided hash without checking version.
     #[access_control_any(roles(Role::DAO))]
+    #[payable]
     pub fn unrestricted_upgrade(
         &mut self,
         contract_id: AccountId,
         hash: String,
         state_migration_gas: Option<u64>,
     ) -> Promise {
+        assert_one_yocto();
         self.upgrade_internal(
             contract_id,
             Some(hash),
@@ -410,7 +443,10 @@ impl AuroraControllerFactory {
 
     /// Downgrades the contract with account id.
     #[access_control_any(roles(Role::DAO))]
+    #[payable]
     pub fn downgrade(&mut self, contract_id: AccountId) -> Promise {
+        assert_one_yocto();
+
         let deployment_info = self.deployments.get_mut(&contract_id).unwrap_or_else(|| {
             panic!("contract with account id: {contract_id} hasn't been deployed")
         });
@@ -509,6 +545,7 @@ impl AuroraControllerFactory {
                         UPGRADE_GAS.saturating_add(Gas::from_gas(gas))
                     }),
             )
+            .with_attached_deposit(NearToken::from_yoctonear(1))
             .upgrade(args.code, args.state_migration_gas)
             .then(
                 Self::ext(env::current_account_id())
@@ -520,6 +557,7 @@ impl AuroraControllerFactory {
 
 #[ext_contract(ext_aurora)]
 pub trait ExtAurora {
+    /// Requires 1yN attached for security purposes
     fn upgrade(
         &mut self,
         #[serializer(borsh)] code: Vec<u8>,

@@ -12,6 +12,7 @@ async fn test_downgrade_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "hash": HASH_3_4_0,
             "version": "3.4.0",
@@ -25,6 +26,7 @@ async fn test_downgrade_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
+        .deposit(NearToken::from_yoctonear(1))
         .args(BLOB_3_4_0.to_vec())
         .max_gas()
         .transact()
@@ -34,6 +36,7 @@ async fn test_downgrade_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "hash": HASH_3_5_0,
             "version": "3.5.0",
@@ -47,6 +50,7 @@ async fn test_downgrade_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
+        .deposit(NearToken::from_yoctonear(1))
         .args(BLOB_3_5_0.to_vec())
         .max_gas()
         .transact()
@@ -87,6 +91,7 @@ async fn test_downgrade_contract() {
 
     let result = factory_owner
         .call(factory.id(), "downgrade")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "contract_id": new_contract_id.clone(),
         }))
