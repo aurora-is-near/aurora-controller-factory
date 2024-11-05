@@ -20,6 +20,7 @@ async fn test_deploy_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "hash": HASH_3_6_4,
             "version": "3.6.4",
@@ -33,6 +34,7 @@ async fn test_deploy_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
+        .deposit(NearToken::from_yoctonear(1))
         .args(BLOB_3_6_4.to_vec())
         .max_gas()
         .transact()
@@ -89,6 +91,7 @@ async fn test_deploy_more_than_one_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "hash": HASH_3_6_4,
             "version": "3.6.4",
@@ -102,6 +105,7 @@ async fn test_deploy_more_than_one_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
+        .deposit(NearToken::from_yoctonear(1))
         .args(BLOB_3_6_4.to_vec())
         .max_gas()
         .transact()
@@ -139,6 +143,7 @@ async fn test_deploy_more_than_one_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "hash": HASH_3_7_0,
             "version": "3.7.0",
@@ -152,6 +157,7 @@ async fn test_deploy_more_than_one_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
+        .deposit(NearToken::from_yoctonear(1))
         .args(BLOB_3_7_0.to_vec())
         .max_gas()
         .transact()
@@ -265,6 +271,7 @@ async fn test_add_deployment_info_for_existed_contract() {
 
         let result = factory_owner
             .call(factory.id(), "add_deployment_info")
+            .deposit(NearToken::from_yoctonear(1))
             .args_json(json!({
                 "contract_id": silo_contract.id(),
                 "deployment_info": &deployment_info
@@ -277,6 +284,7 @@ async fn test_add_deployment_info_for_existed_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "hash": HASH_3_7_0,
             "version": "3.7.0",
@@ -290,6 +298,7 @@ async fn test_add_deployment_info_for_existed_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
+        .deposit(NearToken::from_yoctonear(1))
         .args(BLOB_3_7_0.to_vec())
         .max_gas()
         .transact()
@@ -299,6 +308,7 @@ async fn test_add_deployment_info_for_existed_contract() {
 
     let result = factory_owner
         .call(factory.id(), "upgrade")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "contract_id": silo_contract.id(),
             "state_migration_gas": MIGRATION_GAS

@@ -1,4 +1,4 @@
-use near_sdk::AccountId;
+use near_sdk::{AccountId, NearToken};
 
 use crate::types::ReleaseInfo;
 use crate::AuroraControllerFactory;
@@ -18,6 +18,7 @@ fn test_adding_blob() {
     set_env!(
         predecessor_account_id: predecessor_account_id(),
         input: vec![1; 256],
+        attached_deposit: NearToken::from_yoctonear(1),
     );
     let mut contract = AuroraControllerFactory::new(dao());
 
@@ -45,6 +46,7 @@ fn test_adding_blob() {
     set_env!(
         predecessor_account_id: predecessor_account_id(),
         input: vec![2; 256],
+        attached_deposit: NearToken::from_yoctonear(1),
     );
 
     contract.add_release_info(
@@ -87,6 +89,7 @@ fn test_adding_blob_without_adding_hash() {
     set_env!(
         predecessor_account_id: predecessor_account_id(),
         input: vec![1; 256],
+        attached_deposit: NearToken::from_yoctonear(1),
     );
 
     let mut contract = AuroraControllerFactory::new(dao());
@@ -98,6 +101,7 @@ fn test_check_latest_release() {
     set_env!(
         predecessor_account_id: predecessor_account_id(),
         input: vec![1; 256],
+        attached_deposit: NearToken::from_yoctonear(1),
     );
     let mut contract = AuroraControllerFactory::new(dao());
 
@@ -121,6 +125,7 @@ fn test_check_latest_release() {
     set_env!(
         predecessor_account_id: predecessor_account_id(),
         input: vec![2; 256],
+        attached_deposit: NearToken::from_yoctonear(1),
     );
 
     contract.add_release_info(
@@ -162,6 +167,7 @@ fn test_check_latest_release_blob_without_adding() {
 fn test_set_latest_with_lower_version() {
     set_env!(
         predecessor_account_id: predecessor_account_id(),
+        attached_deposit: NearToken::from_yoctonear(1),
     );
     let mut contract = AuroraControllerFactory::new(dao());
 
@@ -190,6 +196,7 @@ fn test_set_latest_with_lower_version() {
 fn test_add_latest_with_lower_version() {
     set_env!(
         predecessor_account_id: predecessor_account_id(),
+        attached_deposit: NearToken::from_yoctonear(1),
     );
 
     let mut contract = AuroraControllerFactory::new(dao());
@@ -216,9 +223,10 @@ fn test_add_latest_with_lower_version() {
 fn test_use_not_allowed_pause_method() {
     set_env!(
         predecessor_account_id: predecessor_account_id(),
+        attached_deposit: NearToken::from_yoctonear(1),
     );
 
-    let contract = AuroraControllerFactory::new(dao());
+    let mut contract = AuroraControllerFactory::new(dao());
     contract.delegate_pause(new_engine(), Some("some_pause_method".to_string()));
 }
 
