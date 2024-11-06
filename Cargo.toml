@@ -22,7 +22,7 @@ anyhow = "1"
 hex = "0.4"
 near-sdk = "5.5"
 near-contract-standards = "5.5"
-near-plugins = { git = "https://github.com/aleksuss/near-plugins.git", rev = "a1393df" }
+near-plugins = { git = "https://github.com/Near-One/near-plugins.git", rev = "e6e4b07" }
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 
