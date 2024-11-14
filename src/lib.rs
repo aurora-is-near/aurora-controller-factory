@@ -408,8 +408,8 @@ impl AuroraControllerFactory {
 
     /// Returns a contract deployment info for corresponding account id.
     #[must_use]
-    pub fn get_deployment(&self, account_id: AccountId) -> Option<DeploymentInfo> {
-        self.deployments.get(&account_id).cloned()
+    pub fn get_deployment(&self, account_id: &AccountId) -> Option<DeploymentInfo> {
+        self.deployments.get(account_id).cloned()
     }
 
     /// Upgrades a contract with account id and provided or the latest hash.
