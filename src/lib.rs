@@ -10,6 +10,7 @@ use near_sdk::{
     assert_one_yocto, env, ext_contract, near, require, AccountId, Gas, NearToken, PanicOnDefault,
     Promise, PromiseResult, PublicKey,
 };
+use std::collections::BTreeMap;
 
 use crate::event::Event;
 use crate::types::{DeploymentInfo, FunctionCallArgs, ReleaseInfo, UpgradeArgs, Version};
@@ -396,10 +397,19 @@ impl AuroraControllerFactory {
         }
     }
 
-    /// Returns a list of existing contract deployments.
+    /// Returns a list of existing contract deployment infos.
     #[must_use]
-    pub fn get_deployments(&self) -> Vec<DeploymentInfo> {
-        self.deployments.values().cloned().collect()
+    pub fn get_deployments(&self) -> BTreeMap<AccountId, DeploymentInfo> {
+        self.deployments
+            .iter()
+            .map(|(acc, info)| (acc.clone(), info.clone()))
+            .collect()
+    }
+
+    /// Returns a contract deployment info for corresponding account id.
+    #[must_use]
+    pub fn get_deployment(&self, account_id: AccountId) -> Option<DeploymentInfo> {
+        self.deployments.get(&account_id).cloned()
     }
 
     /// Upgrades a contract with account id and provided or the latest hash.

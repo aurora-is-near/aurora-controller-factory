@@ -63,7 +63,7 @@ async fn test_deploy_contract() {
         .unwrap();
     assert!(result.is_success(), "{result:#?}");
 
-    let deployments: Vec<DeploymentInfo> = factory_owner
+    let deployments: BTreeMap<AccountId, DeploymentInfo> = factory_owner
         .view(factory.id(), "get_deployments")
         .await
         .unwrap()
@@ -194,7 +194,7 @@ async fn test_deploy_more_than_one_contract() {
         .unwrap()
         .timestamp();
 
-    let deployments: Vec<DeploymentInfo> = factory_owner
+    let deployments: BTreeMap<AccountId, DeploymentInfo> = factory_owner
         .view(factory.id(), "get_deployments")
         .await
         .unwrap()
@@ -203,22 +203,28 @@ async fn test_deploy_more_than_one_contract() {
     assert_eq!(deployments.len(), 2);
     assert_eq!(
         deployments,
-        vec![
-            DeploymentInfo {
-                hash: HASH_3_6_4.to_string(),
-                version: "3.6.4".parse().unwrap(),
-                deployment_time: deploy_time_1,
-                upgrade_times: [(deploy_time_1, "3.6.4".parse().unwrap())].into(),
-                init_args: near_sdk::serde_json::to_string(&init_args_1).unwrap(),
-            },
-            DeploymentInfo {
-                hash: HASH_3_7_0.to_string(),
-                version: "3.7.0".parse().unwrap(),
-                deployment_time: deploy_time_2,
-                upgrade_times: [(deploy_time_2, "3.7.0".parse().unwrap())].into(),
-                init_args: near_sdk::serde_json::to_string(&init_args_2).unwrap(),
-            }
-        ]
+        BTreeMap::from_iter([
+            (
+                "aurora-1.factory-owner.test.near".parse().unwrap(),
+                DeploymentInfo {
+                    hash: HASH_3_6_4.to_string(),
+                    version: "3.6.4".parse().unwrap(),
+                    deployment_time: deploy_time_1,
+                    upgrade_times: [(deploy_time_1, "3.6.4".parse().unwrap())].into(),
+                    init_args: near_sdk::serde_json::to_string(&init_args_1).unwrap(),
+                }
+            ),
+            (
+                "aurora-2.factory-owner.test.near".parse().unwrap(),
+                DeploymentInfo {
+                    hash: HASH_3_7_0.to_string(),
+                    version: "3.7.0".parse().unwrap(),
+                    deployment_time: deploy_time_2,
+                    upgrade_times: [(deploy_time_2, "3.7.0".parse().unwrap())].into(),
+                    init_args: near_sdk::serde_json::to_string(&init_args_2).unwrap(),
+                }
+            )
+        ])
     );
 }
 

@@ -1,6 +1,7 @@
 use near_sdk::serde_json::json;
 use near_workspaces::types::NearToken;
 use near_workspaces::AccountId;
+use std::collections::BTreeMap;
 
 use super::utils;
 use crate::tests::{BLOB_3_6_4, BLOB_3_7_0, HASH_3_6_4, HASH_3_7_0, MIGRATION_GAS};
@@ -316,7 +317,7 @@ async fn test_upgrade_contract_with_small_gas_for_migration() {
         .unwrap();
     assert!(result.is_success(), "{result:#?}");
 
-    let deployments_info: Vec<DeploymentInfo> = factory_owner
+    let deployments_info: BTreeMap<AccountId, DeploymentInfo> = factory_owner
         .view(factory.id(), "get_deployments")
         .await
         .unwrap()
@@ -363,7 +364,7 @@ async fn test_upgrade_contract_with_small_gas_for_migration() {
                                   // So, the upgrade won't be successful.
 
     // Check that the deployment into hasn't been changed.
-    let result: Vec<DeploymentInfo> = factory_owner
+    let result: BTreeMap<AccountId, DeploymentInfo> = factory_owner
         .view(factory.id(), "get_deployments")
         .await
         .unwrap()
