@@ -1,0 +1,46 @@
+---
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+name: Build
+jobs:
+  build:
+    name: Build contracts
+    runs-on: github-hosted-heavy-runner
+    steps:
+      - name: Install Dependencies
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: libudev-dev
+          version: 1.0
+      - name: Clone the repository
+        uses: actions/checkout@v4
+      - name: Install plugins
+        run: cargo install cargo-make cargo-near
+      - name: Compile contract
+        run: cargo make build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: contracts
+          path: res/aurora-controller*.wasm
+
+  publish:
+    name: Publish contracts
+    runs-on: github-hosted-heavy-runner
+    needs: build
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+      - name: Publish contracts for ${{ github.ref }} release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          tag: ${{ github.ref }}
+          file: contracts/aurora-controller*.wasm
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file_glob: true
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0

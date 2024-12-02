@@ -84,6 +84,6 @@ fn test_stringify_event_metadata() {
 
     assert_eq!(
         event_metadata.to_string(),
-        r#"{"producer":"aurora-controller-factory","version":"0.1.0","event":"add_release_info","metadata":{"hash":"9316bf4c7aa0913f26ef8eebdcb11f3c63bb88c65eb717abfec8ade1b707620c","version":"3.5.0","is_blob_exist":false,"downgrade_hash":null,"description":"Aurora SILO 3.5.0"}}"#
+        r#"{"producer":"aurora-controller-factory","version":"0.2.0","event":"add_release_info","metadata":{"hash":"9316bf4c7aa0913f26ef8eebdcb11f3c63bb88c65eb717abfec8ade1b707620c","version":"3.5.0","is_blob_exist":false,"downgrade_hash":null,"description":"Aurora SILO 3.5.0"}}"#
     );
 }
