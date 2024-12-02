@@ -1,0 +1,71 @@
+[config]
+default_to_workspace = false
+skip_core_tasks = true
+
+[env]
+TARGET_DIR = "${PWD}/res"
+
+[tasks.default]
+alias = "build"
+
+[tasks.clippy]
+command = "cargo"
+args = ["clippy", "--workspace", "--all-targets"]
+
+[tasks.fmt]
+command = "cargo"
+args = ["fmt", "--all", "--", "--check"]
+
+[tasks.build]
+dependencies = ["build-and-rename", "convert-to-borsh"]
+
+[tasks.build-and-rename]
+dependencies = ["build-contract", "rename-contract"]
+
+[tasks.build-contract]
+command = "cargo"
+args = [
+    "near",
+    "build",
+    "--out-dir",
+    "${TARGET_DIR}",
+    "--manifest-path",
+    "contract/Cargo.toml",
+    "--no-docker",
+    "--no-embed-abi",
+    "--no-abi",
+]
+
+[tasks.rename-contract]
+script = "mv ${TARGET_DIR}/aurora_controller_factory.wasm ${TARGET_DIR}/aurora-controller-factory.wasm"
+
+[tasks.convert-to-borsh]
+command = "cargo"
+args = [
+    "run",
+    "-p",
+    "aurora-borsh-converter",
+]
+
+[tasks.test]
+alias = "tests"
+
+[tasks.tests]
+dependencies = ["build-and-rename"]
+run_task = "run-tests"
+
+[tasks.run-tests]
+command = "cargo"
+args = ["test", "--workspace", "--all-targets", "${@}"]
+
+[tasks.clean]
+dependencies = ["rm-contracts"]
+command = "cargo"
+args = ["clean"]
+
+[tasks.rm-contracts]
+script = "rm -rf ${TARGET_DIR}/*controller*.wasm"
+
+[tasks.contract-stats]
+category = "Tools"
+script = "cd ${TARGET_DIR} && du -ah *.wasm"
