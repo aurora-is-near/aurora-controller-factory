@@ -1,7 +1,6 @@
-[package]
-name = "aurora-controller-factory"
+[workspace.package]
 authors = ["Aurora Labs <hello@aurora.dev>"]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 homepage = "https://github.com/aurora-is-near/aurora-controller-factory"
 repository = "https://github.com/aurora-is-near/aurora-controller-factory"
@@ -9,27 +8,24 @@ license = "CC0-1.0"
 readme = "README.md"
 publish = false
 
-[lib]
-crate-type = ["cdylib", "rlib"]
+[workspace]
+resolver = "2"
+members = ["contract", "converter"]
 
-[lints.clippy]
+[workspace.lints.clippy]
 all = "deny"
 nursery = "deny"
 pedantic = "deny"
 
-[dependencies]
+[workspace.dependencies]
 anyhow = "1"
 hex = "0.4"
-near-sdk = "5.5"
-near-contract-standards = "5.5"
-near-plugins = { git = "https://github.com/Near-One/near-plugins.git", rev = "e6e4b07" }
+near-plugins = { git = "https://github.com/Near-One/near-plugins.git", tag = "v0.4.1" }
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
-
-[dev-dependencies]
 near-gas = "0.3"
-near-sdk = { version = "5.5", features = ["unit-testing"] }
-near-workspaces = "0.14"
+near-sdk = "5.6"
+near-workspaces = "0.15"
 tokio = { version = "1", features = ["macros"] }
 
 [profile.release]

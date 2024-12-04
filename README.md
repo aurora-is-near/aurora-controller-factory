@@ -9,9 +9,17 @@ contract implements role-based access control using the [near-plugins].
 
 ### Useful commands
 
-- Build: `cargo build --release --target wasm32-unknown-unknown`
-- Clippy: `cargo clippy --all-targets -- -D warnings`
-- Test: `cargo test --all-targets`
+- Build: `cargo make build`
+- Clippy: `cargo make clippy`
+- Test: `cargo make test`
+
+The `cargo make build` creates two `wasm` files in the `res` folder:
+
+- `aurora-controller-factory.wasm` - the main contract file.
+- `aurora-controller-factory-borsh.wasm` - the borsh serialized contract file for upgrading the contract via
+  `near-plugins`.
+
+Note: the `up_stage_code` transaction from `near-plugins` accepts code of the contract serialized by `borsh`.
 
 ### API
 

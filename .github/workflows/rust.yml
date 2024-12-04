@@ -8,43 +8,22 @@ on:
   pull_request:
 
 jobs:
-  fmt:
-    name: Formatting
+  checks:
+    name: Run ${{ matrix.action }}
     runs-on: github-hosted-heavy-runner
+    strategy:
+      fail-fast: false
+      matrix:
+        action: [ fmt, clippy, tests ]
     steps:
+      - name: Install Dependencies
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: libudev-dev
+          version: 1.0
       - name: Checkout sources
         uses: actions/checkout@v4
-      - name: Run rustfmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-
-  clippy:
-    name: Clippy
-    runs-on: github-hosted-heavy-runner
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-      - name: Run clippy
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-targets -- -D warnings
-
-  test:
-    name: Tests
-    runs-on: github-hosted-heavy-runner
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-      - name: Build Smart Contract
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --target wasm32-unknown-unknown
-      - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-targets
+      - name: Install plugins
+        run: cargo install cargo-make cargo-near
+      - name: Running ${{ matrix.action }}
+        run: cargo make ${{ matrix.action }}
