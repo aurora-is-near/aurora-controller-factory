@@ -1,6 +1,7 @@
 use near_sdk::serde_json::json;
 use near_workspaces::types::NearToken;
 use near_workspaces::AccountId;
+use std::collections::BTreeMap;
 
 use super::utils;
 use crate::tests::{BLOB_3_6_4, BLOB_3_7_0, HASH_3_6_4, HASH_3_7_0};
@@ -80,14 +81,17 @@ async fn test_downgrade_contract() {
         .unwrap();
     assert!(result.is_success());
 
-    let deployments: Vec<DeploymentInfo> = factory_owner
+    let deployments: BTreeMap<AccountId, DeploymentInfo> = factory_owner
         .view(factory.id(), "get_deployments")
         .await
         .unwrap()
         .json()
         .unwrap();
 
-    assert_eq!(deployments[0].version, "3.7.0".parse().unwrap());
+    assert_eq!(
+        deployments[&new_contract_id].version,
+        "3.7.0".parse().unwrap()
+    );
 
     let result = factory_owner
         .call(factory.id(), "downgrade")
@@ -104,12 +108,13 @@ async fn test_downgrade_contract() {
     let version = String::from_utf8(result.unwrap().result).unwrap();
     assert_eq!(version.trim_end(), "3.6.4");
 
-    let deployments: Vec<DeploymentInfo> = factory_owner
-        .view(factory.id(), "get_deployments")
+    let deployments: DeploymentInfo = factory_owner
+        .view(factory.id(), "get_deployment")
+        .args_json(json!({ "account_id": new_contract_id }))
         .await
         .unwrap()
         .json()
         .unwrap();
 
-    assert_eq!(deployments[0].version, "3.6.4".parse().unwrap());
+    assert_eq!(deployments.version, "3.6.4".parse().unwrap());
 }

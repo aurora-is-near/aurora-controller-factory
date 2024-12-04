@@ -110,7 +110,10 @@ fn get_latest_release_hash(&self) -> String;
 fn get_latest_release_blob(&self) -> Vec<u8>;
 
 /// Returns a list of existing contract deployments.
-fn get_deployments(&self) -> Vec<DeploymentInfo>;
+fn get_deployments(&self) -> BTreeMap<AccountId, DeploymentInfo>;
+
+/// Returns a contract deployment info for corresponding account id.
+fn get_deployment(&self, account_id: AccountId) -> Option<DeploymentInfo>;
 ```
 
 #### Callback
