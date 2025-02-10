@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: aurora-controller-factory
+  tags:
+    - contract
+    - near
+  links: []
+  annotations:
+    aurora.dev/security-tier: "1"
+spec:
+  owner: engine-team
+  type: contract
+  lifecycle: production
+  deployedAt:
+    - contract:near/mainnet/ctl-intents.near
