@@ -47,7 +47,7 @@ async fn test_add_new_release() {
 }
 
 #[tokio::test]
-#[should_panic]
+#[should_panic(expected = "HostError(GasLimitExceeded")]
 async fn test_get_release_blob() {
     let (factory_owner, factory, _) = utils::crate_factory().await.unwrap();
 
