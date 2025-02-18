@@ -1,7 +1,7 @@
-use near_sdk::{serde_json::json, NearToken};
-
 use super::utils;
+use crate::tests::{BLOB_3_6_4, HASH_3_6_4};
 use crate::types::ReleaseInfo;
+use near_sdk::{serde_json::json, NearToken};
 
 #[tokio::test]
 async fn test_add_new_release() {
@@ -44,4 +44,44 @@ async fn test_add_new_release() {
         .unwrap();
 
     assert_eq!(releases.len(), 1);
+}
+
+#[tokio::test]
+#[should_panic]
+async fn test_get_release_blob() {
+    let (factory_owner, factory, _) = utils::crate_factory().await.unwrap();
+
+    let result = factory_owner
+        .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
+        .args_json(json!({
+            "hash": HASH_3_6_4,
+            "version": "3.6.4",
+            "is_latest": true,
+            "downgrade_hash": null
+        }))
+        .transact()
+        .await
+        .unwrap();
+    assert!(result.is_success(), "{result:#?}");
+
+    let result = factory_owner
+        .call(factory.id(), "add_release_blob")
+        .deposit(NearToken::from_yoctonear(1))
+        .args(BLOB_3_6_4.to_vec())
+        .max_gas()
+        .transact()
+        .await
+        .unwrap();
+    assert!(result.is_success(), "{result:#?}");
+
+    let blob = factory_owner
+        .call(factory.id(), "get_release_blob")
+        .args_json(json!({ "hash": HASH_3_6_4 }))
+        .view()
+        .await
+        .unwrap()
+        .result;
+
+    assert_eq!(blob, BLOB_3_6_4);
 }
