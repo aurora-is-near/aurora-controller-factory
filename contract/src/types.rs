@@ -163,8 +163,8 @@ fn test_logged_arguments() {
     let action = vec![FunctionCallArgs {
         function_name: "method".to_string(),
         arguments: args,
-        amount: Default::default(),
-        gas: Default::default(),
+        amount: NearToken::default(),
+        gas: Gas::default(),
     }];
     let action_str = near_sdk::serde_json::to_string(&action).unwrap();
     assert!(action_str.len() < 16_384); // 16_384 max size of the log.
