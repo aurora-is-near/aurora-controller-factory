@@ -119,8 +119,6 @@ fn test_check_latest_release() {
         &latest_hash,
         "2661920f2409dd6c8adeb0c44972959f232b6429afa913845d0fd95e7e768234"
     );
-    let latest_blob = contract.get_latest_release_blob();
-    assert_eq!(latest_blob, vec![1; 256]);
 
     set_env!(
         predecessor_account_id: predecessor_account_id(),
@@ -142,8 +140,6 @@ fn test_check_latest_release() {
         &latest_hash,
         "f5c22e35d04167e37913e7963ce033b1f3d17a924a4e6fe5fc95af1224051921"
     );
-    let latest_blob = contract.get_latest_release_blob();
-    assert_eq!(latest_blob, vec![2; 256]);
 }
 
 #[test]
@@ -152,14 +148,6 @@ fn test_check_latest_release_hash_without_adding() {
     set_env!(predecessor_account_id: predecessor_account_id());
     let contract = AuroraControllerFactory::new(dao());
     let _ = contract.get_latest_release_hash();
-}
-
-#[test]
-#[should_panic = "the latest release hash hasn't been set yet"]
-fn test_check_latest_release_blob_without_adding() {
-    set_env!(predecessor_account_id: predecessor_account_id());
-    let contract = AuroraControllerFactory::new(dao());
-    let _ = contract.get_latest_release_blob();
 }
 
 #[test]

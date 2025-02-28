@@ -100,14 +100,8 @@ fn version(&self) -> &str;
 /// Returns a list of existing releases for deployment.
 fn get_releases(&self) -> Vec<ReleaseInfo>;
 
-/// Returns a WASM code from the release that corresponds the provided hash.
-fn get_release_blob(&self, hash: &String) -> Vec<u8>;
-
 /// Returns a hash of the latest release.
 fn get_latest_release_hash(&self) -> String;
-
-/// Returns a WASM code of the latest release.
-fn get_latest_release_blob(&self) -> Vec<u8>;
 
 /// Returns a list of existing contract deployments.
 fn get_deployments(&self) -> BTreeMap<AccountId, DeploymentInfo>;
