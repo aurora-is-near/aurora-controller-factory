@@ -222,10 +222,14 @@ impl AuroraControllerFactory {
         }
     }
 
-    /// Adds bytes of the contract smart contract to the corresponding release info.
+    /// Adds bytes of the contract smart contract to the corresponding release info. The attached
+    /// deposit could be used as a payment for the storage staking.
     #[payable]
     pub fn add_release_blob(&mut self) {
-        assert_one_yocto();
+        require!(
+            !env::attached_deposit().is_zero(),
+            "required at least 1 yoctoNEAR"
+        );
         let blob = env::input().unwrap_or_else(|| panic!("no blob's bytes were provided"));
         let hash = utils::hash_256(&blob);
         let release_info = self.releases.get_mut(&hash).unwrap_or_else(|| {
