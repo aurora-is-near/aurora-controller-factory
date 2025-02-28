@@ -13,7 +13,9 @@ use near_sdk::{
 use std::collections::BTreeMap;
 
 use crate::event::Event;
-use crate::types::{DeploymentInfo, FunctionCallArgs, ReleaseInfo, UpgradeArgs, Version};
+use crate::types::{
+    DeploymentInfo, FunctionCallArgs, LogFunctionCallArgs, ReleaseInfo, UpgradeArgs, Version,
+};
 
 mod event;
 mod keys;
@@ -111,7 +113,7 @@ impl AuroraControllerFactory {
 
     /// Returns version of the controller contract.
     #[must_use]
-    pub const fn version(&self) -> &str {
+    pub const fn version(&self) -> &'static str {
         env!("CARGO_PKG_VERSION")
     }
 
@@ -137,15 +139,22 @@ impl AuroraControllerFactory {
     ) -> Promise {
         require!(
             !env::attached_deposit().is_zero(),
-            "required at least 1 yoctonear",
+            "required at least 1 yoctoNEAR",
         );
+
+        let log_actions = actions
+            .iter()
+            .map(LogFunctionCallArgs::from)
+            .collect::<Vec<_>>();
+
         event::emit(
             Event::DelegatedExecution,
             &json!({
                 "receiver_id": &receiver_id,
-                "actions": &actions
+                "actions": log_actions,
             }),
         );
+
         let mut total = env::attached_deposit();
         actions
             .into_iter()
