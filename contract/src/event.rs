@@ -81,9 +81,11 @@ fn test_stringify_event_metadata() {
         description: Some("Aurora SILO 3.5.0".to_string()),
     };
     let event_metadata = EventMetadata::new(Event::AddReleaseInfo, &release_info);
-
+    let version = env!("CARGO_PKG_VERSION");
     assert_eq!(
         event_metadata.to_string(),
-        r#"{"producer":"aurora-controller-factory","version":"0.2.1","event":"add_release_info","metadata":{"hash":"9316bf4c7aa0913f26ef8eebdcb11f3c63bb88c65eb717abfec8ade1b707620c","version":"3.5.0","is_blob_exist":false,"downgrade_hash":null,"description":"Aurora SILO 3.5.0"}}"#
+        format!(
+            r#"{{"producer":"aurora-controller-factory","version":"{version}","event":"add_release_info","metadata":{{"hash":"9316bf4c7aa0913f26ef8eebdcb11f3c63bb88c65eb717abfec8ade1b707620c","version":"3.5.0","is_blob_exist":false,"downgrade_hash":null,"description":"Aurora SILO 3.5.0"}}}}"#
+        )
     );
 }
