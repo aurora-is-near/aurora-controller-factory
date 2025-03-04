@@ -64,7 +64,7 @@ pub enum Role {
 #[derive(PanicOnDefault, Pausable, Upgradable)]
 #[access_control(role_type(Role))]
 #[upgradable(access_control_roles(
-    code_stagers(Role::DAO),
+    code_stagers(Role::DAO, Role::Updater),
     code_deployers(Role::DAO),
     duration_initializers(Role::DAO),
     duration_update_stagers(Role::DAO),
