@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.0 2025-03-04
+
+- Added the `Updater` role for the `up_stage_code` method.
+- Removed not working view transactions: `get_release_blob` and `get_latest_release_blob`.
+- Added the possibility to attach a deposit for staking storage in the `add_release_blob`.
+- Fixed the issue with logging big size of arguments in the `delegate_execution`.
+
 ## 0.2.1 2024-12-02
 
 - Reworked the `get_deployments` view method.
