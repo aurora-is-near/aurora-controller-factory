@@ -1,12 +1,13 @@
-use super::utils;
-use crate::tests::{BLOB_3_4_0, HASH_3_4_0};
-use crate::types::FunctionCallArgs;
-use near_sdk::borsh::{self, BorshSerialize};
+use near_sdk::near;
 use near_sdk::serde_json::json;
 use near_sdk::Gas;
 use near_workspaces::types::NearToken;
 use near_workspaces::{Account, AccountId, Contract};
 use std::str::FromStr;
+
+use super::utils;
+use crate::tests::{BLOB_3_6_4, HASH_3_6_4};
+use crate::types::FunctionCallArgs;
 
 #[tokio::test]
 async fn test_delegate_execution() {
@@ -14,20 +15,21 @@ async fn test_delegate_execution() {
 
     let result = factory_owner
         .call(factory.id(), "delegate_execution")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "receiver_id": &contract_id,
             "actions": vec![FunctionCallArgs {
                 function_name: "set_owner".to_string(),
-                arguments: contract_id.try_to_vec().map(Into::into).unwrap(),
-                amount: 0.into(),
-                gas: (Gas::ONE_TERA * 5).0.into()
+                arguments: near_sdk::borsh::to_vec(&contract_id).map(Into::into).unwrap(),
+                amount: NearToken::from_near(0),
+                gas: Gas::from_tgas(5)
             }]
         }))
         .max_gas()
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let bytes = factory_owner
         .call(&contract_id, "get_owner")
@@ -39,9 +41,9 @@ async fn test_delegate_execution() {
     assert_eq!(owner, contract_id);
 }
 
-#[derive(BorshSerialize)]
+#[near(serializers = [borsh])]
 struct SetOwner {
-    new_owner: near_sdk::AccountId,
+    new_owner: AccountId,
 }
 
 #[tokio::test]
@@ -50,6 +52,7 @@ async fn test_delegate_pause() {
 
     let result = factory_owner
         .call(factory.id(), "delegate_pause")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "receiver_id": &contract_id,
             "pause_method_name": "pause_contract"
@@ -58,16 +61,14 @@ async fn test_delegate_pause() {
         .transact()
         .await
         .unwrap();
-    dbg!(&result);
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(&contract_id, "set_owner")
         .args_borsh(
-            SetOwner {
+            near_sdk::borsh::to_vec(&SetOwner {
                 new_owner: "new_owner".parse().unwrap(),
-            }
-            .try_to_vec()
+            })
             .unwrap(),
         )
         .transact()
@@ -81,25 +82,27 @@ async fn create_factory() -> (Account, Contract, AccountId) {
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
-            "hash": HASH_3_4_0,
-            "version": "3.4.0",
+            "hash": HASH_3_6_4,
+            "version": "3.6.4",
             "is_latest": true,
             "downgrade_hash": null
         }))
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
-        .args(BLOB_3_4_0.to_vec())
+        .deposit(NearToken::from_yoctonear(1))
+        .args(BLOB_3_6_4.to_vec())
         .max_gas()
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let contract_id: AccountId = "aurora-1.factory-owner.test.near".parse().unwrap();
     let init_args = json!({
@@ -121,7 +124,7 @@ async fn create_factory() -> (Account, Contract, AccountId) {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     (factory_owner, factory, contract_id)
 }

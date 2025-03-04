@@ -1,9 +1,11 @@
-use super::utils;
-use crate::tests::{BLOB_3_4_0, BLOB_3_5_0, HASH_3_4_0, HASH_3_5_0};
-use crate::types::DeploymentInfo;
 use near_sdk::serde_json::json;
 use near_workspaces::types::NearToken;
 use near_workspaces::AccountId;
+use std::collections::BTreeMap;
+
+use super::utils;
+use crate::tests::{BLOB_3_6_4, BLOB_3_7_0, HASH_3_6_4, HASH_3_7_0};
+use crate::types::DeploymentInfo;
 
 #[tokio::test]
 async fn test_downgrade_contract() {
@@ -11,48 +13,51 @@ async fn test_downgrade_contract() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
-            "hash": HASH_3_4_0,
-            "version": "3.4.0",
+            "hash": HASH_3_6_4,
+            "version": "3.6.4",
             "is_latest": true,
             "downgrade_hash": null
         }))
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
-        .args(BLOB_3_4_0.to_vec())
+        .deposit(NearToken::from_yoctonear(1))
+        .args(BLOB_3_6_4.to_vec())
         .max_gas()
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
-            "hash": HASH_3_5_0,
-            "version": "3.5.0",
+            "hash": HASH_3_7_0,
+            "version": "3.7.0",
             "is_latest": true,
-            "downgrade_hash": HASH_3_4_0 // Allow to downgrade for version 3.4.0
+            "downgrade_hash": HASH_3_6_4 // Allow to downgrade for version 3.6.4
         }))
         .transact()
         .await
         .unwrap();
-    dbg!(&result);
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_blob")
-        .args(BLOB_3_5_0.to_vec())
+        .deposit(NearToken::from_yoctonear(1))
+        .args(BLOB_3_7_0.to_vec())
         .max_gas()
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let new_contract_id: AccountId = "aurora.factory-owner.test.near".parse().unwrap();
 
@@ -76,17 +81,21 @@ async fn test_downgrade_contract() {
         .unwrap();
     assert!(result.is_success());
 
-    let deployments: Vec<DeploymentInfo> = factory_owner
+    let deployments: BTreeMap<AccountId, DeploymentInfo> = factory_owner
         .view(factory.id(), "get_deployments")
         .await
         .unwrap()
         .json()
         .unwrap();
 
-    assert_eq!(deployments[0].version, "3.5.0".parse().unwrap());
+    assert_eq!(
+        deployments[&new_contract_id].version,
+        "3.7.0".parse().unwrap()
+    );
 
     let result = factory_owner
         .call(factory.id(), "downgrade")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "contract_id": new_contract_id.clone(),
         }))
@@ -94,17 +103,18 @@ async fn test_downgrade_contract() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
     let result = factory_owner.view(&new_contract_id, "get_version").await;
     let version = String::from_utf8(result.unwrap().result).unwrap();
-    assert_eq!(version.trim_end(), "3.4.0");
+    assert_eq!(version.trim_end(), "3.6.4");
 
-    let deployments: Vec<DeploymentInfo> = factory_owner
-        .view(factory.id(), "get_deployments")
+    let deployments: DeploymentInfo = factory_owner
+        .view(factory.id(), "get_deployment")
+        .args_json(json!({ "account_id": new_contract_id }))
         .await
         .unwrap()
         .json()
         .unwrap();
 
-    assert_eq!(deployments[0].version, "3.4.0".parse().unwrap());
+    assert_eq!(deployments.version, "3.6.4".parse().unwrap());
 }
