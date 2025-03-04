@@ -1,6 +1,7 @@
+use near_sdk::{serde_json::json, NearToken};
+
 use super::utils;
 use crate::types::ReleaseInfo;
-use near_sdk::serde_json::json;
 
 #[tokio::test]
 async fn test_add_new_release() {
@@ -8,6 +9,7 @@ async fn test_add_new_release() {
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "hash": "f5c22e35d04167e37913e7963ce033b1f3d17a924a4e6fe5fc95af1224051921",
             "version": "1.0.1",
@@ -17,10 +19,11 @@ async fn test_add_new_release() {
         .transact()
         .await
         .unwrap();
-    assert!(result.is_success());
+    assert!(result.is_success(), "{result:#?}");
 
     let result = factory_owner
         .call(factory.id(), "add_release_info")
+        .deposit(NearToken::from_yoctonear(1))
         .args_json(json!({
             "hash": "2661920f2409dd6c8adeb0c44972959f232b6429afa913845d0fd95e7e768234",
             "version": "1.0.0",

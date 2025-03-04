@@ -1,0 +1,30 @@
+[package]
+authors.workspace = true
+name = "aurora-controller-factory"
+version.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+readme.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+hex.workspace = true
+near-sdk = { workspace = true, features = ["legacy"] }
+near-plugins.workspace = true
+semver.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+anyhow.workspace = true
+near-sdk = { workspace = true, features = ["unit-testing"] }
+near-gas.workspace = true
+near-workspaces.workspace = true
+tokio.workspace = true

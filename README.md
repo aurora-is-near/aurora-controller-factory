@@ -2,16 +2,24 @@
 
 [![CI](https://github.com/aurora-is-near/aurora-controller-factory/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/aurora-is-near/aurora-controller-factory/actions/workflows/rust.yml)
 
-The main purpose of the contract is to provide the possibility to move all ops-related 
-functions into a separate controller contract. Ops-related functions include: deployment, 
-upgrading, downgrading, and delegation of execution for some transactions. The controller 
+The main purpose of the contract is to provide the possibility to move all ops-related
+functions into a separate controller contract. Ops-related functions include: deployment,
+upgrading, downgrading, and delegation of execution for some transactions. The controller
 contract implements role-based access control using the [near-plugins].
 
 ### Useful commands
 
-- Build: `cargo build --release --target wasm32-unknown-unknown`
-- Clippy: `cargo clippy --all-targets -- -D warnings`
-- Test: `cargo test --all-targets`
+- Build: `cargo make build`
+- Clippy: `cargo make clippy`
+- Test: `cargo make test`
+
+The `cargo make build` creates two `wasm` files in the `res` folder:
+
+- `aurora-controller-factory.wasm` - the main contract file.
+- `aurora-controller-factory-borsh.wasm` - the borsh serialized contract file for upgrading the contract via
+  `near-plugins`.
+
+Note: the `up_stage_code` transaction from `near-plugins` accepts code of the contract serialized by `borsh`.
 
 ### API
 
@@ -20,7 +28,7 @@ contract implements role-based access control using the [near-plugins].
 ```rust
 /// Initializes a new controller contract.
 #[init]
-fn new(owner_id: AccountId) -> Self;
+fn new(dao: Option<AccountId>) -> Self;
 
 /// Attaches new full access key to the controller contract.
 #[access_control_any(roles(Role::DAO))]
@@ -76,7 +84,7 @@ fn upgrade(&self, contract_id: AccountId, hash: Option<String>) -> Promise;
 
 /// Upgrades a contract with account id and provided hash without checking version.
 #[access_control_any(roles(Role::DAO))]
-fn unrestricted_upgrade(&self, contract_id: AccountId, hash: String) -> Promise;   
+fn unrestricted_upgrade(&self, contract_id: AccountId, hash: String) -> Promise;
 
 /// Downgrades the contract with account id.
 #[access_control_any(roles(Role::DAO))]
@@ -92,17 +100,14 @@ fn version(&self) -> &str;
 /// Returns a list of existing releases for deployment.
 fn get_releases(&self) -> Vec<ReleaseInfo>;
 
-/// Returns a WASM code from the release that corresponds the provided hash.
-fn get_release_blob(&self, hash: &String) -> Vec<u8>;
-
 /// Returns a hash of the latest release.
 fn get_latest_release_hash(&self) -> String;
 
-/// Returns a WASM code of the latest release.
-fn get_latest_release_blob(&self) -> Vec<u8>;
-
 /// Returns a list of existing contract deployments.
-fn get_deployments(&self) -> Vec<DeploymentInfo>;
+fn get_deployments(&self) -> BTreeMap<AccountId, DeploymentInfo>;
+
+/// Returns a contract deployment info for corresponding account id.
+fn get_deployment(&self, account_id: AccountId) -> Option<DeploymentInfo>;
 ```
 
 #### Callback
@@ -152,4 +157,5 @@ pub struct DeploymentInfo {
 [near-plugins]: https://github.com/aurora-is-near/near-plugins
 
 ### LICENSE
+
 **Aurora Controller Factory** is under [CC0 1.0 Universal](LICENSE)
