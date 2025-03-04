@@ -289,15 +289,6 @@ impl AuroraControllerFactory {
         self.releases.values().cloned().collect()
     }
 
-    /// Returns a WASM code from the release that corresponds the provided hash.
-    #[must_use]
-    pub fn get_release_blob(&self, hash: &String) -> Vec<u8> {
-        self.blobs
-            .get(hash)
-            .cloned()
-            .unwrap_or_else(|| panic!("blob doesn't exist for release info with hash: {hash}"))
-    }
-
     /// Returns a hash of the latest release.
     #[must_use]
     pub fn get_latest_release_hash(&self) -> String {
@@ -305,13 +296,6 @@ impl AuroraControllerFactory {
             || panic!("the latest release hash hasn't been set yet"),
             |r| r.hash,
         )
-    }
-
-    /// Returns a WASM code of the latest release.
-    #[must_use]
-    pub fn get_latest_release_blob(&self) -> Vec<u8> {
-        let latest_hash = self.get_latest_release_hash();
-        self.get_release_blob(&latest_hash)
     }
 
     /// Deploys a new contract on the release info that corresponds to the provided hash.
