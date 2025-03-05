@@ -186,7 +186,8 @@ impl AuroraControllerFactory {
             }),
         );
 
-        Promise::new(receiver_id).function_call(function_name, vec![], NearToken::from_near(0), gas)
+        let args = json!({ "key": "ALL" }).to_string().into_bytes();
+        Promise::new(receiver_id).function_call(function_name, args, NearToken::from_near(0), gas)
     }
 
     /// Adds new contract release info.
