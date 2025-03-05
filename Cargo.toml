@@ -20,7 +20,7 @@ pedantic = "deny"
 [workspace.dependencies]
 anyhow = "1"
 hex = "0.4"
-near-plugins = { git = "https://github.com/Near-One/near-plugins.git", tag = "v0.4.1" }
+near-plugins = { git = "https://github.com/Near-One/near-plugins.git", tag = "v0.5.0" }
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 near-gas = "0.3"
