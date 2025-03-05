@@ -58,6 +58,7 @@ pub enum Role {
     Pauser,
     Releaser,
     Updater,
+    Unpauser,
 }
 
 /// Controller contract for deploying and upgrading contracts.
@@ -70,7 +71,10 @@ pub enum Role {
     duration_update_stagers(Role::DAO),
     duration_update_appliers(Role::DAO),
 ))]
-#[pausable(manager_roles(Role::DAO, Role::Pauser))]
+#[pausable(
+    pause_roles(Role::DAO, Role::Pauser),
+    unpause_roles(Role::DAO, Role::Unpauser)
+)]
 #[near(contract_state)]
 pub struct AuroraControllerFactory {
     releases: IterableMap<String, ReleaseInfo>,
