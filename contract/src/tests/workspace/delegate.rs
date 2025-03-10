@@ -77,6 +77,27 @@ async fn test_delegate_pause() {
     assert!(result.is_failure());
 }
 
+#[tokio::test]
+async fn test_delegate_pause_via_plugins() {
+    let (_, factory, _) = create_factory().await;
+
+    let result = factory
+        .call("delegate_pause")
+        .deposit(NearToken::from_yoctonear(1))
+        .args_json(json!({
+            "receiver_id": &factory.id(),
+            "pause_method_name": "pa_pause_feature",
+            "pause_arguments": {
+                "key": "ALL"
+            }
+        }))
+        .max_gas()
+        .transact()
+        .await
+        .unwrap();
+    assert!(result.is_success(), "{result:#?}");
+}
+
 async fn create_factory() -> (Account, Contract, AccountId) {
     let (factory_owner, factory, _) = utils::crate_factory().await.unwrap();
 
