@@ -1,6 +1,5 @@
 use near_plugins::{
-    access_control, access_control_any, pause, AccessControlRole, AccessControllable, Pausable,
-    Upgradable,
+    access_control, access_control_any, AccessControlRole, AccessControllable, Pausable, Upgradable,
 };
 use near_sdk::borsh::BorshDeserialize;
 use near_sdk::collections::LazyOption;
@@ -201,13 +200,10 @@ impl AuroraControllerFactory {
             }),
         );
 
-        let arguments = pause_arguments.map_or_else(
-            || vec![],
-            |args| {
-                near_sdk::serde_json::to_vec(&args)
-                    .unwrap_or_else(|e| panic!("bad format of the pause arguments: {e}"))
-            },
-        );
+        let arguments = pause_arguments.map_or_else(Vec::new, |args| {
+            near_sdk::serde_json::to_vec(&args)
+                .unwrap_or_else(|e| panic!("bad format of the pause arguments: {e}"))
+        });
         let gas = env::prepaid_gas().saturating_sub(OUTER_DELEGATE_PAUSE_GAS);
 
         Promise::new(receiver_id).function_call(
