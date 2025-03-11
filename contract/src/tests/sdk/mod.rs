@@ -215,7 +215,7 @@ fn test_use_not_allowed_pause_method() {
     );
 
     let mut contract = AuroraControllerFactory::new(dao());
-    contract.delegate_pause(new_engine(), Some("some_pause_method".to_string()));
+    contract.delegate_pause(new_engine(), Some("some_pause_method".to_string()), None);
 }
 
 fn dao() -> Option<AccountId> {

@@ -36,11 +36,16 @@ fn attach_full_access_key(&mut self, public_key: PublicKey) -> Promise;
 
 /// Delegates an execution of actions to the specified receiver.
 #[access_control_any(roles(Role::DAO))]
-fn delegate_execution(&self, receiver_id: AccountId, actions: Vec<FunctionCallArgs>) -> Promise;
+fn delegate_execution(&mut self, receiver_id: AccountId, actions: Vec<FunctionCallArgs>) -> Promise;
 
-/// Pauses the contract with provided account id.
+/// Pauses the contract with provided account id and optional pause method name and pause arguments.
 #[access_control_any(roles(Role::DAO, Role::Pauser))]
-fn delegate_pause(&self, receiver_id: AccountId, pause_method_name: Option<String>) -> Promise;
+fn delegate_pause(
+    &mut self,
+    receiver_id: AccountId,
+    pause_method_name: Option<String>,
+    pause_arguments: Option<Value>,
+) -> Promise;
 
 /// Adds new contract release info.
 #[access_control_any(roles(Role::DAO))]

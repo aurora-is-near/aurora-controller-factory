@@ -182,6 +182,7 @@ impl AuroraControllerFactory {
         &mut self,
         receiver_id: AccountId,
         pause_method_name: Option<String>,
+        pause_arguments: Option<Value>,
     ) -> Promise {
         assert_one_yocto();
         let function_name = match pause_method_name {
@@ -189,17 +190,28 @@ impl AuroraControllerFactory {
             Some(method) => panic!("pause method: {method} is not allowed"),
             None => "pause_contract".to_string(), // Aurora Engine pause method name is used by default.
         };
-        let gas = env::prepaid_gas().saturating_sub(OUTER_DELEGATE_PAUSE_GAS);
 
         event::emit(
             Event::DelegatedPause,
             &json!({
                 "receiver_id": &receiver_id,
-                "pause_method_name": &function_name
+                "pause_method_name": &function_name,
+                "pause_arguments": pause_arguments.as_ref().unwrap_or(&Value::Null),
             }),
         );
 
-        Promise::new(receiver_id).function_call(function_name, vec![], NearToken::from_near(0), gas)
+        let arguments = pause_arguments.map_or_else(Vec::new, |args| {
+            near_sdk::serde_json::to_vec(&args)
+                .unwrap_or_else(|e| panic!("bad format of the pause arguments: {e}"))
+        });
+        let gas = env::prepaid_gas().saturating_sub(OUTER_DELEGATE_PAUSE_GAS);
+
+        Promise::new(receiver_id).function_call(
+            function_name,
+            arguments,
+            NearToken::from_near(0),
+            gas,
+        )
     }
 
     /// Adds new contract release info.
