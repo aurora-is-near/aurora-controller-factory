@@ -59,6 +59,7 @@ pub enum Role {
     Releaser,
     Updater,
     Unpauser,
+    Downgrader,
 }
 
 /// Controller contract for deploying and upgrading contracts.
@@ -465,7 +466,7 @@ impl AuroraControllerFactory {
     }
 
     /// Downgrades the contract with account id.
-    #[access_control_any(roles(Role::DAO))]
+    #[access_control_any(roles(Role::DAO, Role::Downgrader))]
     #[payable]
     pub fn downgrade(&mut self, contract_id: AccountId) -> Promise {
         assert_one_yocto();
