@@ -25,7 +25,7 @@ semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 near-gas = "0.3"
 near-sdk = "5.6"
-near-workspaces = "0.17"
+near-workspaces = "0.20"
 tokio = { version = "1", features = ["macros"] }
 
 [profile.release]
