@@ -92,7 +92,7 @@ fn upgrade(&self, contract_id: AccountId, hash: Option<String>) -> Promise;
 fn unrestricted_upgrade(&self, contract_id: AccountId, hash: String) -> Promise;
 
 /// Downgrades the contract with account id.
-#[access_control_any(roles(Role::DAO))]
+#[access_control_any(roles(Role::DAO, Role::Downgrader))]
 fn downgrade(&self, contract_id: AccountId) -> Promise;
 ```
 
@@ -111,14 +111,14 @@ fn get_latest_release_hash(&self) -> String;
 /// Returns a list of existing contract deployments.
 fn get_deployments(&self) -> BTreeMap<AccountId, DeploymentInfo>;
 
-/// Returns a contract deployment info for corresponding account id.
+/// Returns contract deployment info for a corresponding account id.
 fn get_deployment(&self, account_id: AccountId) -> Option<DeploymentInfo>;
 ```
 
 #### Callback
 
 ```rust
-/// Callback which adds or modifies a deployment info after successful deployment or upgrading of new contract.
+/// Callback which adds or modifies deployment info after successful deployment or upgrading of new contract.
 #[private]
 pub fn update_deployment_info(&mut self, contract_id: &AccountId, deployment_info: &DeploymentInfo);
 ```
