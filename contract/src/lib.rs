@@ -348,7 +348,7 @@ impl AuroraControllerFactory {
             .blobs
             .get(&blob_hash)
             .unwrap_or_else(|| panic!("blob doesn't exist for hash: {}", &blob_hash));
-        let init_args_bytes = near_sdk::serde_json::to_vec(&init_args)
+        let init_args_string = near_sdk::serde_json::to_string(&init_args)
             .unwrap_or_else(|e| panic!("bad format of the init args: {e}"));
 
         event::emit(Event::Deploy, &event_metadata);
@@ -359,7 +359,7 @@ impl AuroraControllerFactory {
             version: release_info.version.clone(),
             deployment_time: block_time,
             upgrade_times: [(block_time, release_info.version.clone())].into(),
-            init_args: near_sdk::serde_json::to_string(&init_args).unwrap_or_default(),
+            init_args: init_args_string.clone(),
         };
 
         Promise::new(new_contract_id.clone())
@@ -369,7 +369,7 @@ impl AuroraControllerFactory {
             .deploy_contract(code.clone())
             .function_call(
                 init_method,
-                init_args_bytes,
+                init_args_string.into_bytes(),
                 NearToken::from_near(0),
                 NEW_GAS,
             )
