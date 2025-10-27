@@ -8,7 +8,7 @@ name: Build
 jobs:
   build:
     name: Build contracts
-    runs-on: github-hosted-heavy-runner
+    runs-on: runs-on=${{ github.run_id }}/family=c5a.2xlarge+c6a.2xlarge/image=ubuntu24-full-x64
     steps:
       - name: Install Dependencies
         uses: awalsh128/cache-apt-pkgs-action@v1
@@ -29,7 +29,7 @@ jobs:
 
   publish:
     name: Publish contracts
-    runs-on: github-hosted-heavy-runner
+    runs-on: runs-on=${{ github.run_id }}/family=c5a.2xlarge+c6a.2xlarge/image=ubuntu24-full-x64
     needs: build
     steps:
       - name: Download artifacts
