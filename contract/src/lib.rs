@@ -576,11 +576,13 @@ impl AuroraControllerFactory {
                         UPGRADE_GAS.saturating_add(Gas::from_gas(gas))
                     }),
             )
+            .with_unused_gas_weight(1)
             .with_attached_deposit(NearToken::from_yoctonear(1))
             .upgrade(args.code, args.state_migration_gas)
             .then(
                 Self::ext(env::current_account_id())
                     .with_static_gas(ADD_DEPLOYMENT_GAS)
+                    .with_unused_gas_weight(0)
                     .update_deployment_info(contract_id, deployment_info),
             )
     }
