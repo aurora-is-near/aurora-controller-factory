@@ -10,20 +10,29 @@ on:
 jobs:
   checks:
     name: Run ${{ matrix.action }}
-    runs-on: runs-on=${{ github.run_id }}/family=c5a.8xlarge+c6a.8xlarge/image=ubuntu24-full-x64
+    runs-on: runs-on=${{ github.run_id }}/family=c5a.8xlarge+c6a.8xlarge/image=ubuntu24-full-x64/extras=s3-cache
     strategy:
       fail-fast: false
       matrix:
         action: [ fmt, clippy, tests ]
     steps:
-      - name: Install Dependencies
-        uses: awalsh128/cache-apt-pkgs-action@v1
+      - name: Setup RunsOn
+        uses: runs-on/action@v2
         with:
-          packages: libudev-dev
-          version: 1.0
+          metrics: cpu,network,memory,disk,io
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libudev-dev build-essential pkg-config libssl-dev
       - name: Checkout sources
         uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Install plugins
-        run: cargo install cargo-make cargo-near
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: stable
+          command: install
+          args: cargo-make cargo-near
       - name: Running ${{ matrix.action }}
         run: cargo make ${{ matrix.action }}
