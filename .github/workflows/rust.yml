@@ -10,7 +10,7 @@ on:
 jobs:
   checks:
     name: Run ${{ matrix.action }}
-    runs-on: runs-on=${{ github.run_id }}/family=c5a.8xlarge+c6a.8xlarge/image=ubuntu24-full-x64/extras=s3-cache
+    runs-on: runs-on=${{ github.run_id }}/runner=rust-near-integration-special-16cpu-32gb
     strategy:
       fail-fast: false
       matrix:
