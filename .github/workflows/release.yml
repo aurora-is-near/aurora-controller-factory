@@ -8,17 +8,26 @@ name: Build
 jobs:
   build:
     name: Build contracts
-    runs-on: runs-on=${{ github.run_id }}/family=c5a.8xlarge+c6a.8xlarge/image=ubuntu24-full-x64
+    runs-on: runs-on=${{ github.run_id }}/family=c5a.8xlarge+c6a.8xlarge/image=ubuntu24-full-x64/extras=s3-cache
     steps:
-      - name: Install Dependencies
-        uses: awalsh128/cache-apt-pkgs-action@v1
+      - name: Setup RunsOn
+        uses: runs-on/action@v2
         with:
-          packages: libudev-dev
-          version: 1.0
+          metrics: cpu,network,memory,disk,io
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libudev-dev build-essential pkg-config libssl-dev
       - name: Clone the repository
         uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Install plugins
-        run: cargo install cargo-make cargo-near
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: stable
+          command: install
+          args: cargo-make cargo-near
       - name: Compile contract
         run: cargo make build
       - name: Upload artifacts
@@ -29,7 +38,7 @@ jobs:
 
   publish:
     name: Publish contracts
-    runs-on: runs-on=${{ github.run_id }}/family=c5a.8xlarge+c6a.8xlarge/image=ubuntu24-full-x64
+    runs-on: runs-on=${{ github.run_id }}/family=c5a.xlarge+c6a.xlarge/image=ubuntu24-full-x64
     needs: build
     steps:
       - name: Download artifacts
