@@ -29,6 +29,6 @@ jobs:
       - name: Install Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Install plugins
-        run: cargo install cargo-make cargo-near
+        run: cargo +stable install cargo-make cargo-near
       - name: Running ${{ matrix.action }}
         run: cargo make ${{ matrix.action }}
