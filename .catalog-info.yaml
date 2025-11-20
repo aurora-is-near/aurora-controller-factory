@@ -1,0 +1,9 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: aurora-controller-factory
+  description: Aurora Controller Factory
+spec:
+  targets:
+    - ./**/.catalog-info.yaml

@@ -1,0 +1,23 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: aurora-controller-factory-contract
+  title: Aurora Conntroller Factory
+  description: |-
+     Ops-related functions moved into a separate controller contract
+  tags:
+    - contract
+    - factory
+    - near
+  links: []
+  annotations:
+    aurora.dev/security-tier: "1"
+spec:
+  owner: engine-team
+  type: contract
+  lifecycle: production
+  system: aurora-engine
+  deployedAt:
+    - contract:near/mainnet/c.aurora
+  interactsWith: []
