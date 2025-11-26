@@ -5,7 +5,7 @@ metadata:
   name: aurora-controller-factory-contract
   title: Aurora Conntroller Factory
   description: |-
-     Ops-related functions moved into a separate controller contract
+     Ops-related functions moved into a separate controller contract. controller is used for mainnet, c for virtual chains
   tags:
     - contract
     - factory
@@ -20,4 +20,5 @@ spec:
   system: aurora-engine
   deployedAt:
     - contract:near/mainnet/c.aurora
+    - contract:near/mainnet/controller.aurora
   interactsWith: []
