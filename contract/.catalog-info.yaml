@@ -21,4 +21,5 @@ spec:
   deployedAt:
     - contract:near/mainnet/c.aurora
     - contract:near/mainnet/controller.aurora
+    - contract:near/testnet/near-testnet-controller.aurora
   interactsWith: []
