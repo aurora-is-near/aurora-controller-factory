@@ -1,0 +1,13 @@
+[advisories]
+ignore = [
+    # RUSTSEC-2026-0222: wasmtime "Stores can mix up type indices between
+    # engines".
+    #
+    # Doesn't matter because the wasmtime VM is only used in testing.
+    "RUSTSEC-2026-0222",
+
+    # RUSTSEC-2022-0054: wee_alloc is unmaintained.
+    #
+    # Not an issue because memory isn't stored across contract calls.
+    "RUSTSEC-2022-0054",
+]
