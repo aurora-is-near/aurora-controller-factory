@@ -169,7 +169,7 @@ impl AuroraControllerFactory {
                     .unwrap_or_else(|| env::panic_str("not enough deposit attached"));
                 promise.function_call(
                     action.function_name,
-                    action.arguments.into(),
+                    action.arguments.0,
                     action.amount,
                     action.gas,
                 )
