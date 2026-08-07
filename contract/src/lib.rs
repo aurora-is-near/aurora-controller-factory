@@ -8,7 +8,7 @@ use near_sdk::serde_json::{json, Value};
 use near_sdk::store::IterableMap;
 use near_sdk::{
     assert_one_yocto, env, ext_contract, near, require, AccountId, Gas, NearToken, PanicOnDefault,
-    Promise, PromiseResult, PublicKey,
+    Promise, PublicKey,
 };
 use std::collections::BTreeMap;
 
@@ -327,7 +327,7 @@ impl AuroraControllerFactory {
     ) -> Promise {
         require!(
             !env::attached_deposit().is_zero(),
-            "required at least 1 yoctonear"
+            "required at least 1 yoctoNEAR"
         );
         // Check that the `new_contract_id` wasn't used for another contract before.
         require!(
@@ -393,16 +393,16 @@ impl AuroraControllerFactory {
         self.deployments.insert(contract_id, deployment_info);
     }
 
-    /// Callback which adds new deployment info after successful deployment of new contract.
+    /// Callback that adds new deployment info after the successful deployment of a new contract.
     #[private]
     pub fn update_deployment_info(
         &mut self,
         contract_id: AccountId,
         deployment_info: DeploymentInfo,
     ) {
-        let result = env::promise_result(0);
+        let result = env::promise_result_checked(0, usize::MAX);
 
-        if matches!(result, PromiseResult::Successful(_)) {
+        if result.is_ok() {
             event::emit(
                 Event::UpdateDeploymentInfo,
                 &json!({"contract_id": contract_id, "deployment_info": deployment_info}),
@@ -420,7 +420,7 @@ impl AuroraControllerFactory {
             .collect()
     }
 
-    /// Returns a contract deployment info for corresponding account id.
+    /// Returns contract deployment info for corresponding account id.
     #[must_use]
     pub fn get_deployment(&self, account_id: &AccountId) -> Option<DeploymentInfo> {
         self.deployments.get(account_id).cloned()
